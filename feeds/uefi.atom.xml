@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Volatile rumblings of a spotted mind - UEFI</title><link href="https://apalos.github.io/" rel="alternate"></link><link href="https://apalos.github.io/feeds/uefi.atom.xml" rel="self"></link><id>https://apalos.github.io/</id><updated>2020-12-19T10:20:00+02:00</updated><subtitle>Volatile rumblings of a spotted mind</subtitle><entry><title>Protected UEFI variables with U-Boot</title><link href="https://apalos.github.io/Protected%20UEFI%20variables%20with%20U-Boot.html" rel="alternate"></link><published>2020-12-19T10:20:00+02:00</published><updated>2020-12-19T10:20:00+02:00</updated><author><name>Ilias Apalodimas</name></author><id>tag:apalos.github.io,2020-12-19:/Protected UEFI variables with U-Boot.html</id><summary type="html">&lt;p&gt;Critical system variables, like the UEFI ones, must be protected against a variety of attacks. &lt;br&gt;On Arm servers and desktops, which typically run EDK2, dedicated flashes are used. Those &lt;br&gt; would normally be accessible from the secure world only, since they are storing critical &lt;br&gt; variables for our systems integrity and security. &lt;br&gt;&lt;br&gt; But what's the status of devices running on U-Boot?&lt;/p&gt;</summary><content type="html">&lt;h6&gt;&lt;/h6&gt;
+&lt;p&gt;&lt;link rel="stylesheet" href="overload.css"&gt;&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Intro&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Critical system variables,  like the UEFI ones,  must be protected against a variety of attacks.
+On Arm servers and desktops, which typically run EDK2, dedicated flashes are used.  Those would
+normally be accessible from the secure world only,  since they are storing critical variables for
+our systems integrity and security.&lt;/p&gt;
+&lt;p&gt;What about smaller embedded systems though?  Those don't typically run EDK2 nor do they have
+special dedicated flashes. Those systems usually use U-Boot.  Prior to 2019 U-Boot was using it's
+environment to store EFI variables. Although that was fine for the initial UEFI implementation,  it
+imposed limitations to platforms that wanted to store variables securely and in the long run,
+implement UEFI Secure Boot.&lt;/p&gt;
+&lt;p&gt;Embedded devices with a dedicated flash in Secure World are rare though (anyone aware of any?).
+What's becoming more common though is eMMC flashes with an RPMB partition.  Wouldn't it be nice to
+store the EFI variables in that?  We would then inherit the RPMB Authentication and protection
+against Replay Attacks and use a non-volatile storage we trust more due to it's built-in security
+characteristics.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;More problems&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;In the Arm ecosystem and it's Trusted Firmware you have,  up to now (and prior to Arm8.4),  two ways
+of dispatching payloads to the Secure world.  The first one is called &lt;strong&gt;&lt;em&gt;Secure Partition Manager&lt;/em&gt;&lt;/strong&gt;
+or in short SPM.  This is what EDK2 uses,  when compiled for Arm,  to spawn &lt;strong&gt;&lt;em&gt;StandAloneMM&lt;/em&gt;&lt;/strong&gt;,  the
+component used for the variable management and storage.&lt;/p&gt;
+&lt;p&gt;The second one is called SPD or &lt;strong&gt;&lt;em&gt;Secure Payload Dispatcher&lt;/em&gt;&lt;/strong&gt;.  This is what OP-TEE is using today.
+The problem is that those two are mutually exclusive.  So you can either store EFI variables
+securely or run OP-TEE.  Small devices,  with limited hardware have a lot to gain when using a
+secure OS though.  The first thing that comes in mind is running a FirmwareTPM or a secure client
+that takes care of the on-boarding process for small IoT devices.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Less code to the rescue&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;We could of course rewrite StandAloneMM as a Trusted Application for OP-TEE.  The application is
+huge though, the final binary for EDK2 is ~2.5MB and quite complex.  Wouldn't we be better off with
+an application that's been working for a couple of years?  But can we run it directly in OP-TEE?
+That way we can get the best of both worlds. Re-use an existing application which will manage our
+variables securely and maintain the ability to run a Secure OS.&lt;/p&gt;
+&lt;p&gt;It turns out that the StandAloneMM binary is self-relocatable,  so as long as we manage to jump on
+the first instruction,  everything will just 'work'.  We would of course need code in OP-TEE to
+launch the new partition and in U-Boot to communicate with that partition,  but that should be way
+less, or at least that's what we assumed.&lt;/p&gt;
+&lt;p&gt;And less it was!&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://github.com/OP-TEE/optee_os/commit/42471ecf25b7/" target="_blank"&gt;OP-TEE&lt;/a&gt;
+and
+&lt;a href="https://github.com/u-boot/u-boot/commit/f042e47e8fb4/" target="_blank"&gt;U-Boot&lt;/a&gt;
+already got patches for that and EDK2 patches are currently on upstream review.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Combining it all together&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;So far I've talked about variable management and internal details of Arm's Secure World. We've also
+managed to run StandAloneMM as part of OP-TEE, but who's responsible for reading and storing the
+variables eventually?&lt;/p&gt;
+&lt;p&gt;StandAloneMM includes the driver that implements the accesses to our hardware. EDK2 calls this
+&lt;strong&gt;&lt;em&gt;Firmware Volume Block Protocol&lt;/em&gt;&lt;/strong&gt; and it's designed to provide control over block-oriented firmware
+devices.  So the missing link is a StandAloneMM FVB that can re-use OP-TEE and it's ability to
+access our RPMB partition securely,  something like &lt;a href="https://git.linaro.org/people/ilias.apalodimas/edk2-platforms.git/tree/Drivers/OpTeeRpmb/OpTeeRpmbFvb.c?h=ffa_svc_optional_on_upstream" target="_blank"&gt;this.&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;If you combine all of the above, the final architecture looks like this!&lt;/p&gt;
+&lt;p&gt;&lt;img src="site_images/stmm.png" alt="OP-TEE StMM"&gt;&lt;/p&gt;
+&lt;p&gt;An obvious downside is that you need to compile 4 different projects to get your final firmware.
+On the other hand if we choose to make it a TA (Trusted Application) we use &lt;s&gt;only&lt;/s&gt; 3, but you'd
+have to compile that extra TA and link it to OP-TEE as an EarlyTA anyway.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Building&lt;/strong&gt;&lt;/h2&gt;
+&lt;h3&gt;&lt;strong&gt;Building TFA&lt;/strong&gt;&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;mkdir firmware &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="nb"&gt;cd&lt;/span&gt; firmware/
+git clone https://github.com/ARM-software/arm-trusted-firmware
+&lt;span class="nb"&gt;pushd&lt;/span&gt; arm-trusted-firmware/
+make &lt;span class="nv"&gt;CROSS_COMPILE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;aarch64-linux-gnu- &lt;span class="nv"&gt;ARCH&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;aarch64 &lt;span class="nv"&gt;PLAT&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&amp;lt;board&amp;gt; &lt;span class="nv"&gt;TARGET_BOARD&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&amp;lt;board&amp;gt; &lt;span class="nv"&gt;SPD&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;opteed
+&lt;span class="nb"&gt;popd&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;&lt;strong&gt;Building EDK2&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;At the time of this article the EDK2 patchset is under review&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git clone https://git.linaro.org/people/ilias.apalodimas/edk2.git -b ffa_svc_optional_on_upstream
+git clone https://git.linaro.org/people/ilias.apalodimas/edk2-platforms.git -b ffa_svc_optional_on_upstream
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;WORKSPACE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;&lt;span class="nb"&gt;pwd&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;PACKAGES_PATH&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="nv"&gt;$WORKSPACE&lt;/span&gt;/edk2:&lt;span class="nv"&gt;$WORKSPACE&lt;/span&gt;/edk2-platforms
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;ACTIVE_PLATFORM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Platform/StMMRpmb/PlatformStandaloneMm.dsc&amp;quot;&lt;/span&gt;
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;GCC5_AARCH64_PREFIX&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;aarch64-linux-gnu-
+&lt;span class="nb"&gt;pushd&lt;/span&gt; edk2/
+git submodule init &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; git submodule update --init --recursive
+&lt;span class="nb"&gt;popd&lt;/span&gt;
+&lt;span class="nb"&gt;source&lt;/span&gt; edk2/edksetup.sh
+make -C edk2/BaseTools
+build -p &lt;span class="nv"&gt;$ACTIVE_PLATFORM&lt;/span&gt; -b RELEASE -a AARCH64 -t GCC5 -n &lt;span class="k"&gt;$(&lt;/span&gt;nproc&lt;span class="k"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;The StandAloneMM binary is located at &lt;strong&gt;Build/MmStandaloneRpmb/RELEASE_GCC5/FV/BL32_AP_MM.fd&lt;/strong&gt;&lt;/p&gt;
+&lt;h3&gt;&lt;strong&gt;Building OP-TEE&lt;/strong&gt;&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git clone https://github.com/OP-TEE/optee_os.git
+cp Build/MmStandaloneRpmb/RELEASE_GCC5/FV/BL32_AP_MM.fd optee_os/
+&lt;span class="nb"&gt;pushd&lt;/span&gt; optee_os/
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;ARCH&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;arm
+&lt;span class="nv"&gt;CROSS_COMPILE32&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;arm-linux-gnueabihf- make -j32 &lt;span class="nv"&gt;CFG_ARM64_core&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;y &lt;span class="nv"&gt;PLATFORM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&amp;lt;plat&amp;gt; &lt;span class="se"&gt;\&lt;/span&gt;
+    &lt;span class="nv"&gt;CFG_STMM_PATH&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;BL32_AP_MM.fd &lt;span class="nv"&gt;CFG_RPMB_FS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;y &lt;span class="nv"&gt;CFG_RPMB_FS_DEV_ID&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&amp;lt;dev id &lt;span class="m"&gt;0&lt;/span&gt;,1 etc&amp;gt; &lt;span class="se"&gt;\&lt;/span&gt;
+    &lt;span class="nv"&gt;CFG_CORE_HEAP_SIZE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;524288&lt;/span&gt; &lt;span class="nv"&gt;CFG_CORE_DYN_SHM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;y &lt;span class="nv"&gt;CFG_RPMB_WRITE_KEY&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt; &lt;span class="se"&gt;\&lt;/span&gt;
+    &lt;span class="nv"&gt;CFG_REE_FS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;n &lt;span class="nv"&gt;CFG_CORE_ARM64_PA_BITS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;48&lt;/span&gt; &lt;span class="nv"&gt;CFG_SCTLR_ALIGNMENT_CHECK&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;n &lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="nb"&gt;popd&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;span style="color:red"&gt;&lt;u&gt;&lt;strong&gt;CAUTION&lt;/strong&gt;&lt;/u&gt;&lt;/span&gt;: OP-TEE will program the RPMB key
+(which is one time programmable).  If your platform port of OP-TEE doesn't have a way of retrieving
+a secure key from the hardware you might end up with the default &lt;code&gt;CFG_RPMB_TESTKEY&lt;/code&gt;.&lt;/p&gt;
+&lt;h3&gt;&lt;strong&gt;Building U-Boot&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;You'll need to enable U-Boot's extra configuration options to enable this.  So clone U-Boot, apply
+your board defconfig and enable these options:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git clone https://github.com/u-boot/u-boot.git
+&lt;span class="nb"&gt;pushd&lt;/span&gt; u-boot/
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;CROSS_COMPILE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;aarch64-linux-gnu-
+&lt;span class="nb"&gt;export&lt;/span&gt; &lt;span class="nv"&gt;ARCH&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;arm64
+&lt;span class="nb"&gt;pushd&lt;/span&gt; u-boot
+make menuconfig ---&amp;gt; Enable the required options
+
+&lt;span class="nv"&gt;CONFIG_OPTEE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;y
+&lt;span class="nv"&gt;CONFIG_CMD_OPTEE_RPMB&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;y
+&lt;span class="nv"&gt;CONFIG_EFI_MM_COMM_TEE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;y
+
+make -j &lt;span class="k"&gt;$(&lt;/span&gt;nproc&lt;span class="k"&gt;)&lt;/span&gt;
+&lt;span class="nb"&gt;popd&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;NOTE&lt;/strong&gt;: U-Boot currently only supports dynamic shared memory to communicate with OP-TEE.
+Your board's OP-TEE port should register that memory in &lt;strong&gt;./core/arch/arm/plat-platform/main.c&lt;/strong&gt;
+or define it in your platform DTS file.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;register_ddr&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;DRAM0_BASE&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DRAM0_SIZE&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt; &lt;span class="o"&gt;---&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;replace&lt;/span&gt; &lt;span class="n"&gt;with&lt;/span&gt; &lt;span class="n"&gt;your&lt;/span&gt; &lt;span class="n"&gt;board&lt;/span&gt; &lt;span class="n"&gt;specific&lt;/span&gt; &lt;span class="n"&gt;ranges&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;You'll otherwise get an error trying to probe OP-TEE.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Assembling the final image and testing&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Each board has, unfortunately,  it's own way of creating the final firmware image.  The build steps
+for EDK2 and ArmTrustedFirmware should be standard.  For assembling the final image containing
+TF-A, OP-TEE and U-Boot refer to the vendor manual.&lt;/p&gt;
+&lt;p&gt;On your first boot, if the RPMB key is not programmed, OP-TEE will do that for you.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;D/TC:?? &lt;span class="m"&gt;00&lt;/span&gt; tee_rpmb_write_and_verify_key:1069 RPMB INIT: Writing Key value:
+D/TC:?? &lt;span class="m"&gt;00&lt;/span&gt; tee_rpmb_write_and_verify_key:1070 00000000fc142dc0  xx xx xx xx xx xx xx xx  xx xx xx xx xx xx xx xx
+D/TC:?? &lt;span class="m"&gt;00&lt;/span&gt; tee_rpmb_write_and_verify_key:1070 00000000fc142dd0  xx xx xx xx xx xx xx xx  xx xx xx xx xx xx xx xx
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;&lt;strong&gt;Print variables&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Notice OP-TEE probing before accessing the variables &lt;strong&gt;OP-TEE: revision 3.11 (e6e7781f)&lt;/strong&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="o"&gt;=&lt;/span&gt;&amp;gt; printenv -e
+Found &lt;span class="m"&gt;2&lt;/span&gt; disks
+OP-TEE: revision &lt;span class="m"&gt;3&lt;/span&gt;.11 &lt;span class="o"&gt;(&lt;/span&gt;e6e7781f&lt;span class="o"&gt;)&lt;/span&gt;
+SetupMode:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+SignatureSupport:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x40
+SecureBoot:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+certdbv:
+    d9bee56e-75dc-49d9-b4d7-b534210f637a
+    &lt;span class="m"&gt;2103&lt;/span&gt;-11-19 &lt;span class="m"&gt;18&lt;/span&gt;:43:00
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;AT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x4
+AuditMode:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+DeployedMode:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+VendorKeys:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+PlatformLangCodes:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x6
+OsIndicationsSupported:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x8
+CustomMode:
+    c076ec0c-7028-4399-a072-71ee5c448b9f
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+certdb:
+    d9bee56e-75dc-49d9-b4d7-b534210f637a
+    &lt;span class="m"&gt;2103&lt;/span&gt;-11-19 &lt;span class="m"&gt;18&lt;/span&gt;:43:00
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS&lt;span class="p"&gt;|&lt;/span&gt;RT&lt;span class="p"&gt;|&lt;/span&gt;AT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x4
+VendorKeysNv:
+    9073e4e0-60ec-4b6e-9903-4c223c260f3c
+    &lt;span class="m"&gt;2103&lt;/span&gt;-11-19 &lt;span class="m"&gt;18&lt;/span&gt;:43:00
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS&lt;span class="p"&gt;|&lt;/span&gt;AT&lt;span class="p"&gt;|&lt;/span&gt;RO, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x1
+PlatformLang:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS&lt;span class="p"&gt;|&lt;/span&gt;RT, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x6
+Boot0000:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS&lt;span class="p"&gt;|&lt;/span&gt;RT, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; 0x78
+BootOrder:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS&lt;span class="p"&gt;|&lt;/span&gt;RT, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nv"&gt;0x2&lt;/span&gt;
+&lt;span class="o"&gt;=&lt;/span&gt;&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;&lt;strong&gt;Set/Get a variable&lt;/strong&gt;&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="o"&gt;=&lt;/span&gt;&amp;gt; setenv -e -nv -bs -rt test2 &lt;span class="nv"&gt;test2&lt;/span&gt;
+&lt;span class="o"&gt;=&lt;/span&gt;&amp;gt; printenv -e test2
+test2:
+    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
+    NV&lt;span class="p"&gt;|&lt;/span&gt;BS&lt;span class="p"&gt;|&lt;/span&gt;RT, &lt;span class="nv"&gt;DataSize&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nv"&gt;0x5&lt;/span&gt;
+&lt;span class="o"&gt;=&lt;/span&gt;&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;&lt;strong&gt;Check available storage&lt;/strong&gt;&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;efidebug&lt;/span&gt; &lt;span class="n"&gt;query&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;bs&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;rt&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;nv&lt;/span&gt;
+&lt;span class="n"&gt;Max&lt;/span&gt; &lt;span class="n"&gt;storage&lt;/span&gt; &lt;span class="n"&gt;size&lt;/span&gt; &lt;span class="mi"&gt;16284&lt;/span&gt;
+&lt;span class="n"&gt;Remaining&lt;/span&gt; &lt;span class="n"&gt;storage&lt;/span&gt; &lt;span class="n"&gt;size&lt;/span&gt; &lt;span class="mi"&gt;15188&lt;/span&gt;
+&lt;span class="n"&gt;Max&lt;/span&gt; &lt;span class="n"&gt;variable&lt;/span&gt; &lt;span class="n"&gt;size&lt;/span&gt; &lt;span class="mi"&gt;8132&lt;/span&gt;
+&lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;&lt;strong&gt;Next Steps&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;Since U-Boot's EFI support is getting richer I'll try installing Debian on Armv8 designed to work 
+as a &lt;a href="https://www.solid-run.com/arm-servers-networking-platforms/honeycomb-workstation/" target="_blank"&gt;workstation&lt;/a&gt;&lt;/p&gt;</content><category term="Bootloaders"></category><category term="Security"></category><category term="U-Boot"></category><category term="UEFI"></category><category term="Arm"></category></entry></feed>

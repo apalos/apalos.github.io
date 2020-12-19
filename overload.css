@@ -1,0 +1,5 @@
+p {
+  word-break: normal;
+  overflow: visible;
+  max-width: 100ch;
+}
