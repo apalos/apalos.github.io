@@ -26,6 +26,7 @@
 
 
 
+  
 
 
 <meta name="author" content="Ilias Apalodimas" />
@@ -86,6 +87,11 @@
           <li>
             <a  class="sc-linkedin" href="https://www.linkedin.com/in/ilias-apalodimas-91891a34/" target="_blank">
               <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-twitter" href="https://www.twitter.com/_apalos" target="_blank">
+              <i class="fab fa-twitter"></i>
             </a>
           </li>
       </ul>
@@ -159,7 +165,8 @@ less, or at least that's what we assumed.</p>
 <p><a href="https://github.com/OP-TEE/optee_os/commit/42471ecf25b7/" target="_blank">OP-TEE</a>
 and
 <a href="https://github.com/u-boot/u-boot/commit/f042e47e8fb4/" target="_blank">U-Boot</a>
-already got patches for that and EDK2 patches are currently on upstream review.</p>
+already got patches for that and EDK2 patches are currently <s>on upstream review</s>
+upstreamed.</p>
 <h2><strong>Combining it all together</strong></h2>
 <p>So far I've talked about variable management and internal details of Arm's Secure World. We've also
 managed to run StandAloneMM as part of OP-TEE, but who's responsible for reading and storing the
@@ -184,11 +191,11 @@ make <span class="nv">CROSS_COMPILE</span><span class="o">=</span>aarch64-linux-
 
 <h3><strong>Building EDK2</strong></h3>
 <p>At the time of this article the EDK2 patchset is under review</p>
-<div class="highlight"><pre><span></span><code>git clone https://git.linaro.org/people/ilias.apalodimas/edk2.git -b ffa_svc_optional_on_upstream
-git clone https://git.linaro.org/people/ilias.apalodimas/edk2-platforms.git -b ffa_svc_optional_on_upstream
+<div class="highlight"><pre><span></span><code>git clone https://github.com/tianocore/edk2.git
+git clone https://github.com/tianocore/edk2-platforms.git
 <span class="nb">export</span> <span class="nv">WORKSPACE</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
 <span class="nb">export</span> <span class="nv">PACKAGES_PATH</span><span class="o">=</span><span class="nv">$WORKSPACE</span>/edk2:<span class="nv">$WORKSPACE</span>/edk2-platforms
-<span class="nb">export</span> <span class="nv">ACTIVE_PLATFORM</span><span class="o">=</span><span class="s2">&quot;Platform/StMMRpmb/PlatformStandaloneMm.dsc&quot;</span>
+<span class="nb">export</span> <span class="nv">ACTIVE_PLATFORM</span><span class="o">=</span><span class="s2">&quot;Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc&quot;</span>
 <span class="nb">export</span> <span class="nv">GCC5_AARCH64_PREFIX</span><span class="o">=</span>aarch64-linux-gnu-
 <span class="nb">pushd</span> edk2/
 git submodule init <span class="o">&amp;&amp;</span> git submodule update --init --recursive
@@ -362,7 +369,6 @@ Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a 
   "description": ""
 }
 </script>
-
 
 </body>
 </html>
