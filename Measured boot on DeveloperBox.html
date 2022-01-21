@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/stylesheet/style.min.css">
+
+
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+          href="https://apalos.github.io/theme/pygments/github.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/solid.css">
+
+
+    <link href="https://apalos.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Volatile rumblings Atom">
+
+
+
+  
+
+
+<meta name="author" content="Ilias Apalodimas" />
+<meta name="description" content="UEFI Secure and measured Boot is the minimal basis for a trustworthy device nowadays. Let&#39;s take a look on how modern U-Boot with the help of OP-TEE can provide that without any specialized hardware." />
+<meta name="keywords" content="Bootloaders, Security, U-Boot, UEFI, TPM, Measured Boot, Secure Boot">
+
+
+<meta property="og:site_name" content="Volatile rumblings"/>
+<meta property="og:title" content="(Cheap) UEFI Measured boot on DeveloperBox"/>
+<meta property="og:description" content="UEFI Secure and measured Boot is the minimal basis for a trustworthy device nowadays. Let&#39;s take a look on how modern U-Boot with the help of OP-TEE can provide that without any specialized hardware."/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="https://apalos.github.io/Measured boot on DeveloperBox.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2022-01-21 09:20:00+02:00"/>
+<meta property="article:modified_time" content=""/>
+<meta property="article:author" content="https://apalos.github.io/author/ilias-apalodimas.html">
+<meta property="article:section" content="UEFI"/>
+<meta property="article:tag" content="Bootloaders"/>
+<meta property="article:tag" content="Security"/>
+<meta property="article:tag" content="U-Boot"/>
+<meta property="article:tag" content="UEFI"/>
+<meta property="article:tag" content="TPM"/>
+<meta property="article:tag" content="Measured Boot"/>
+<meta property="article:tag" content="Secure Boot"/>
+<meta property="og:image" content="site_images/profile.png">
+
+  <title>Volatile rumblings &ndash; (Cheap) UEFI Measured boot on DeveloperBox</title>
+
+</head>
+<body class="light-theme">
+  <aside>
+    <div>
+      <a href="https://apalos.github.io">
+        <img src="site_images/profile.png" alt="" title="">
+      </a>
+
+      <h1>
+        <a href="https://apalos.github.io"></a>
+      </h1>
+
+<p>Volatile rumblings</p>
+
+      <nav>
+        <ul class="list">
+
+
+
+            <li>
+              <a target="_self" href="http://github.com/Xdp-project" >XDP</a>
+            </li>
+        </ul>
+      </nav>
+
+      <ul class="social">
+          <li>
+            <a  class="sc-github" href="https://github.com/apalos" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-linkedin" href="https://www.linkedin.com/in/ilias-apalodimas-91891a34/" target="_blank">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-twitter" href="https://www.twitter.com/_apalos" target="_blank">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </li>
+      </ul>
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href="https://apalos.github.io">Home</a>
+
+      <a href="/archives.html">Archives</a>
+      <a href="/categories.html">Categories</a>
+      <a href="/tags.html">Tags</a>
+
+      <a href="https://apalos.github.io/feeds/all.atom.xml">Atom</a>
+
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="Measured boot on DeveloperBox">(Cheap) UEFI Measured boot on DeveloperBox</h1>
+    <p>
+      Posted on Fri 21 January 2022 in <a href="https://apalos.github.io/category/uefi.html">UEFI</a>
+
+        &#8226; 5 min read
+    </p>
+  </header>
+
+
+  <div>
+    <h6></h6>
+<p><link rel="stylesheet" href="overload.css"></p>
+<h2><strong>How can measured boot help</strong></h2>
+<p>TPMs are microcontrollers designed for cryptographic tasks. Don’t think of them
+as crypto accelerators though, cryptographic operations on your CPU will (almost)
+always be faster.</p>
+<p>Even so TPMs have the ability to wrap and tie a key into certain platform measurements.  This is
+called key sealing.  The platform measurements are stored in Platform Configuration Registers, or for short, PCRs.
+PCRs are zeroed out on the platform boot and can only be reset on a system reboot.
+They can be extended by writing a SHA hash (typically SHA-1,256 for TPMv2) into the PCR.
+When a PCR is extended the hardware concatenates the new hash to the existing 
+PCR value and new SHA is stored.</p>
+<p>U-Boot supports <a href="https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf">EFI TCG2</a>.
+Its purpose is to define APIs and provide information, for things like, is a TPM 
+present, which PCR banks are active,  obtain the TCG boot log, extend hashes to PCRs,
+append events to the TCG boot log etc. </p>
+<p>So you can effectively encrypt your root filesystem and store the decryption
+key safely in your TPM.  That key will only be released if the TPM PCRs
+contain the exact same values that they had when the key was sealed.</p>
+<p>The PCR usage is described
+<a href="https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_PFP_r1p05_v23_pub.pdf">here</a></p>
+<ul>
+<li><strong>PCR0:</strong> SRTM, BIOS, Host Platform Extensions, Embedded Option ROMs and PI Drivers</li>
+<li><strong>PCR1:</strong> Host Platform Configuration</li>
+<li><strong>PCR2:</strong> UEFI driver and application Code</li>
+<li><strong>PCR3:</strong> UEFI driver and application Configuration and Data</li>
+<li><strong>PCR4:</strong> UEFI Boot Manager Code (usually the MBR) and Boot Attempts</li>
+<li><strong>PCR5:</strong> Boot Manager Code Configuration and Data (for use by the Boot Manager Code) and GPT/Partition Table</li>
+<li><strong>PCR6:</strong> Host Platform Manufacturer Specific</li>
+<li><strong>PCR7:</strong> Secure Boot Policy</li>
+<li><strong>PCR8-15:</strong> Defined for use by the Static OS</li>
+<li><strong>PCR16:</strong> Debug</li>
+<li><strong>PCR23:</strong> Application Support</li>
+</ul>
+<h2><strong>Why the DeveloperBox</strong></h2>
+<p>A while ago I explained how storing EFI Variables into an RPMB partition of an 
+<a href="https://apalos.github.io/Protected%20UEFI%20variables%20with%20U-Boot.html#Protected%20UEFI%20variables%20with%20U-Boot">eMMC</a> works.
+There's basically three requirements.</p>
+<ul>
+<li>Your hardware has OP-TEE support</li>
+<li>A working eMMC in U-Boot and Linux</li>
+<li>Upstream U-Boot support</li>
+</ul>
+<p>With an eMMC available we can also use Microsoft's firmware TPM (or <a href="https://github.com/microsoft/ms-tpm-20-ref/">fTPM</a>)
+and enable measured boot.</p>
+<p>This is the only <a href="https://www.96boards.org/product/developerbox/">hardware</a>
+I had available which abides to those requirements. 
+However what you'll read here applies to any board that has identical features.</p>
+<h2><strong>Compiling (a lot)</strong></h2>
+<p>There's <strong>a lot</strong> of firmware components that need to be compiled for this to work.
+Just for reference you will need</p>
+<ul>
+<li><a href="https://github.com/ARM-software/SCP-firmware.git">SCP-firmware</a></li>
+<li><a href="https://github.com/ARM-software/arm-trusted-firmware.git">TF-A</a></li>
+<li><a href="https://github.com/OP-TEE/optee_os">OP-TEE</a></li>
+<li><a href="https://github.com/u-boot/u-boot.git">U-Boot</a></li>
+<li><a href="https://github.com/tianocore/edk2.git">EDK2</a></li>
+<li><a href="https://github.com/tianocore/edk2-platforms.git">StandAloneMM from edk2-platforms</a></li>
+<li><a href="https://github.com/microsoft/ms-tpm-20-ref/">fTPM</a></li>
+</ul>
+<p>You'll also need complex instructions on how to compile those and assemble the
+image as well as some not (yet) upstreamed patches.
+Fortunately there's an OpenEmbedded layer from Linaro that can do this for us
+on the DeveloperBox.</p>
+<div class="highlight"><pre><span></span><code>git clone https://git.codelinaro.org/linaro/dependable-boot/meta-ts.git
+<span class="nb">cd</span> meta-ts
+kas build ci/synquacer.yml
+</code></pre></div>
+
+<h2><strong>Updating the firmware</strong></h2>
+<p>You can find detailed instructions <a href="https://www.96boards.org/documentation/enterprise/developerbox/installation/board-recovery.md.html#update-using-serial-flasher">here</a>
+The tl;dr version is flip DSW2-7 to enable the serial flasher, open your minicom and use xmodem to
+send and update the files.</p>
+<p>All the files you need will be located at <code>build/tmp/deploy/images/synquacer/</code></p>
+<div class="highlight"><pre><span></span><code>flash write cm3 -&gt;  Control-A S -&gt; send scp_romramfw_release.bin
+flash write arm-tf -&gt; Control-A S -&gt; send fip_all_arm_tf_optee.bin
+flash rawwrite 0x500000 0x100000  -&gt; Control-A S -&gt; send optee/tee-pager_v2.bin
+flash rawwrite 0x200000 0x100000 -&gt; Control-A S -&gt; send u-boot.bin
+</code></pre></div>
+
+<h2><strong>Install a distro</strong></h2>
+<p>I am using
+<a href="https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/aarch64/iso/Fedora-Server-netinst-aarch64-35-1.2.iso">Fedora</a> 
+on the example here,  but since the U-Boot versions since 2021.04 are 
+SystemReady-IR compliant any COTS distro should work.</p>
+<div class="highlight"><pre><span></span><code>sudo dd <span class="k">if</span><span class="o">=</span>Fedora-Server-netinst-aarch64-35-1.2.iso <span class="nv">of</span><span class="o">=</span>/dev/sdX <span class="nv">bs</span><span class="o">=</span>128M <span class="nv">status</span><span class="o">=</span>progress
+</code></pre></div>
+
+<p>Plug your usb stick in a port and start up the board.
+In U-Boot's console do</p>
+<div class="highlight"><pre><span></span><code>usb reset
+load usb <span class="m">0</span> <span class="nv">$kernel_addr_r</span> efi/boot/BOOTAA64.EFI <span class="o">&amp;&amp;</span> bootefi <span class="nv">$kernel_addr_r</span>
+</code></pre></div>
+
+<p>Since I am using the box in headless mode,  installing via VNC is a nice option to avoid
+the console nuisance.</p>
+<p><img src="site_images/vnc.png" alt="VNC"></p>
+<p><strong>Make sure you encrypt the filesystem using a password as we'll be 
+needing this later on</strong></p>
+<p><img src="site_images/encrypt.png" alt="Encrypt FS"></p>
+<p>It's worth noting that since U-Boot does not support SetVariable at runtime you'll get an error
+while the installer is trying to update the EFI Boot#### variables.  This is far from fatal,  you
+can just continue the installation and fix up the boot options later.</p>
+<p><img src="site_images/error.png" alt="SetVariable Error"></p>
+<p>Once the installation completes, you will have 3 partitions: EFI, boot, and the luks encrypted root.</p>
+<p>Reboot your board and stop U-Boot at it's console.</p>
+<div class="highlight"><pre><span></span><code>nvme scan
+efidebug boot add -b <span class="m">0</span> Fedora nvme <span class="m">0</span> EFI/fedora/shimaa64.efi
+efidebug boot order <span class="m">0</span>
+bootefi bootmgr
+</code></pre></div>
+
+<p>That should set SHIM as your first boot choice.</p>
+<h2><strong>Enabling fTPM</strong></h2>
+<p>The kernel modules needed for Microsoft's <a href="https://github.com/microsoft/ms-tpm-20-ref/">fTPM</a>
+are included in the Fedora35 kernel.  However,  since it relies on OP-TEE to 
+provide the RPMB access,  you need to start the TEE supplicant before the module gets inserted.</p>
+<h3>Compiling optee_client</h3>
+<p>On the target system, get a copy of optee_client compile it and install it.  The default installation will end up on
+<code>/usr/local/sbin</code></p>
+<div class="highlight"><pre><span></span><code>git clone https://github.com/OP-TEE/optee_client.git
+<span class="nb">cd</span> optee_client <span class="o">&amp;&amp;</span> mkdir build <span class="o">&amp;&amp;</span> <span class="nb">cd</span> build
+cmake ../ -DRPMB_EMU<span class="o">=</span><span class="m">0</span>
+make -j<span class="k">$(</span>nproc<span class="k">)</span>
+sudo make install
+</code></pre></div>
+
+<h3>Enabling fTPM on systemd</h3>
+<p>Create <code>/etc/systemd/system/tee-supplicant.service</code>  with the following contents</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span>Unit<span class="o">]</span>
+<span class="nv">Description</span><span class="o">=</span>tee supplicant
+
+<span class="o">[</span>Service<span class="o">]</span>
+<span class="nv">User</span><span class="o">=</span>root
+<span class="nv">ExecStart</span><span class="o">=</span>tee-supplicant
+<span class="nv">Restart</span><span class="o">=</span>always
+
+<span class="o">[</span>Install<span class="o">]</span>
+<span class="nv">WantedBy</span><span class="o">=</span>sysinit.target
+</code></pre></div>
+
+<p>and enable the service</p>
+<div class="highlight"><pre><span></span><code>sudo systemctl <span class="nb">enable</span> tee-supplicant
+</code></pre></div>
+
+<p>If you reboot your system now your firmwareTPM should be operational.
+You can check the logs with </p>
+<div class="highlight"><pre><span></span><code>sudo tpm2_eventlog /sys/kernel/security/tpm0/binary_bios_measurements
+</code></pre></div>
+
+<h3>Sealing the key</h3>
+<p>Remember when you installed an encrypted filesystem?  With the TPM up and running now
+you can automate the decryption of your root filesystem.</p>
+<p>Fedora has clevis,  an automated encryption framework,  which can make your life easier
+as far as key sealing and unsealing is concerned.</p>
+<div class="highlight"><pre><span></span><code>sudo dnf install clevis clevis-luks clevis-dracut clevis-udisks2 clevis-systemd
+sudo clevis luks <span class="nb">bind</span> -d /dev/nvme0n1p3 tpm2 <span class="s1">&#39;{&quot;pcr_ids&quot;:&quot;0,1,2,3,4,5,6,7&quot;}&#39;</span>
+</code></pre></div>
+
+<h3>Adding tee-supplicant to your initramfs</h3>
+<p>As we mentioned the fTPM relies on the op-tee supplicant for the RPMB accesses.  So the missing
+piece of the puzzle in order to access your TPM, unseal your key and decrypt the
+filesystem,  is create an initramfs with the needed modules and the tee-supplicant.</p>
+<p>Create <code>/usr/lib/dracut/modules.d/60tee-supplicant/</code> directory, copy the 
+<code>/etc/systemd/system/tee-supplicant.service</code> we created earlier and<br>
+add a <code>module-setup.sh</code> file with the following contents.</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/bash</span>
+check<span class="o">()</span> <span class="o">{</span>
+    require_binaries /usr/local/sbin/tee-supplicant <span class="o">||</span> <span class="k">return</span> <span class="m">1</span>
+    <span class="k">return</span> <span class="m">0</span>
+<span class="o">}</span>
+
+depends<span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="m">0</span>
+<span class="o">}</span>
+
+install<span class="o">()</span> <span class="o">{</span>
+    inst /usr/local/sbin/tee-supplicant /sbin/tee-supplicant
+    inst <span class="s2">&quot;</span><span class="nv">$moddir</span><span class="s2">/tee-supplicant.service&quot;</span> <span class="s2">&quot;</span><span class="nv">$systemdsystemunitdir</span><span class="s2">/tee-supplicant.service&quot;</span>
+    <span class="nv">$SYSTEMCTL</span> -q --root <span class="s2">&quot;</span><span class="nv">$initdir</span><span class="s2">&quot;</span> add-wants cryptsetup.target tee-supplicant.service
+<span class="o">}</span>
+
+installkernel<span class="o">()</span> <span class="o">{</span>
+    <span class="nv">hostonly</span><span class="o">=</span><span class="s1">&#39;&#39;</span> <span class="nv">instmods</span> <span class="o">=</span>drivers/char/tpm
+    instmods tee optee
+<span class="o">}</span>
+</code></pre></div>
+
+<p>You can now re-create your initramfs with</p>
+<div class="highlight"><pre><span></span><code>sudo dracut --add clevis-pin-tpm2 --add tee-supplicant --force
+</code></pre></div>
+
+<p>If everything is setup correctly you should see something along the lines of this on your screen</p>
+<div class="highlight"><pre><span></span><code>Welcome to Fedora Linux <span class="m">35</span> <span class="o">(</span>Server Edition<span class="o">)</span> dracut-055-6.fc35 <span class="o">(</span>Initramfs<span class="o">)</span>!
+&lt;snip&gt;
+<span class="o">[</span>  OK  <span class="o">]</span> Reached target Basic System.
+         Starting Cryptography Setu…8ff0-43f6-9484-b4f16ff43093...
+<span class="o">[</span>  OK  <span class="o">]</span> Started tee supplicant.
+Please enter passphrase <span class="k">for</span> disk Samsung SSD <span class="m">960</span> EVO 250GB <span class="o">(</span>luks-5fe9fed9-8ff0-43f6-9484-b4f16ff43093<span class="o">)</span>:
+</code></pre></div>
+
+<p>but this time you won't have to supply a password!</p>
+<h2><strong>UEFI Secure Boot</strong></h2>
+<p>At the time of the writing,  due to toolchain complications,  Fedora isn't
+signing their SHIM.  Once this get's fixed we'll follow up on UEFI Secure Boot.</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="https://apalos.github.io/tag/bootloaders.html">Bootloaders</a>
+      <a href="https://apalos.github.io/tag/security.html">Security</a>
+      <a href="https://apalos.github.io/tag/u-boot.html">U-Boot</a>
+      <a href="https://apalos.github.io/tag/uefi.html">UEFI</a>
+      <a href="https://apalos.github.io/tag/tpm.html">TPM</a>
+      <a href="https://apalos.github.io/tag/measured-boot.html">Measured Boot</a>
+      <a href="https://apalos.github.io/tag/secure-boot.html">Secure Boot</a>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy;  </p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " Volatile rumblings ",
+  "url" : "https://apalos.github.io",
+  "image": "site_images/profile.png",
+  "description": ""
+}
+</script>
+
+</body>
+</html>

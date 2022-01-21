@@ -10,19 +10,18 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/stylesheet/style.min.css">
+    <link rel="stylesheet" type="text/css" href="/theme/stylesheet/style.min.css">
 
 
     <link id="pygments-light-theme" rel="stylesheet" type="text/css"
-          href="https://apalos.github.io/theme/pygments/github.min.css">
+          href="/theme/pygments/github.min.css">
 
 
-  <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/fontawesome.css">
-  <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/brands.css">
-  <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/solid.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="/theme/font-awesome/css/solid.css">
 
 
-    <link href="https://apalos.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Volatile rumblings Atom">
 
 
 
@@ -30,42 +29,44 @@
 
 
 <meta name="author" content="Ilias Apalodimas" />
-<meta name="description" content="TPMs are starting to play an important role in system security and integrity. So let&#39;s take a look on the latest U-Boot additions enabling TPMs when booting with UEFI" />
-<meta name="keywords" content="Bootloaders, Security, U-Boot, UEFI, TPM">
+<meta name="description" content="Assembling a trustworthy device using U-Boot and EFI" />
+<meta name="keywords" content="Bootloaders, Security, U-Boot, UEFI, TPM, Measured Boot, Secure Boot">
 
 
-<meta property="og:site_name" content="Volatile rumblings"/>
-<meta property="og:title" content="EFI TCG2 protocol in U-Boot and QEMU"/>
-<meta property="og:description" content="TPMs are starting to play an important role in system security and integrity. So let&#39;s take a look on the latest U-Boot additions enabling TPMs when booting with UEFI"/>
+<meta property="og:site_name" content="Volatile rumblings of a spotted mind"/>
+<meta property="og:title" content="Secure and Measured boot on DeveloperBox"/>
+<meta property="og:description" content="Assembling a trustworthy device using U-Boot and EFI"/>
 <meta property="og:locale" content="en_US"/>
-<meta property="og:url" content="https://apalos.github.io/EFI TCG2 protocol in U-Boot and QEMU.html"/>
+<meta property="og:url" content="/Secure and Measured boot on DeveloperBox.html"/>
 <meta property="og:type" content="article"/>
-<meta property="article:published_time" content="2021-08-31 10:20:00+03:00"/>
+<meta property="article:published_time" content="2022-01-04 20:20:00+02:00"/>
 <meta property="article:modified_time" content=""/>
-<meta property="article:author" content="https://apalos.github.io/author/ilias-apalodimas.html">
+<meta property="article:author" content="/author/ilias-apalodimas.html">
 <meta property="article:section" content="UEFI"/>
 <meta property="article:tag" content="Bootloaders"/>
 <meta property="article:tag" content="Security"/>
 <meta property="article:tag" content="U-Boot"/>
 <meta property="article:tag" content="UEFI"/>
 <meta property="article:tag" content="TPM"/>
+<meta property="article:tag" content="Measured Boot"/>
+<meta property="article:tag" content="Secure Boot"/>
 <meta property="og:image" content="site_images/profile.png">
 
-  <title>Volatile rumblings &ndash; EFI TCG2 protocol in U-Boot and QEMU</title>
+  <title>Volatile rumblings of a spotted mind &ndash; Secure and Measured boot on DeveloperBox</title>
 
 </head>
 <body class="light-theme">
   <aside>
     <div>
-      <a href="https://apalos.github.io">
+      <a href="">
         <img src="site_images/profile.png" alt="" title="">
       </a>
 
       <h1>
-        <a href="https://apalos.github.io"></a>
+        <a href=""></a>
       </h1>
 
-<p>Volatile rumblings</p>
+<p>Volatile rumblings of a spotted mind</p>
 
       <nav>
         <ul class="list">
@@ -101,22 +102,21 @@
   <main>
 
     <nav>
-      <a href="https://apalos.github.io">Home</a>
+      <a href="">Home</a>
 
       <a href="/archives.html">Archives</a>
       <a href="/categories.html">Categories</a>
       <a href="/tags.html">Tags</a>
 
-      <a href="https://apalos.github.io/feeds/all.atom.xml">Atom</a>
 
     </nav>
 
 <article class="single">
   <header>
       
-    <h1 id="EFI TCG2 protocol in U-Boot and QEMU">EFI TCG2 protocol in U-Boot and QEMU</h1>
+    <h1 id="Secure and Measured boot on DeveloperBox">Secure and Measured boot on DeveloperBox</h1>
     <p>
-      Posted on Tue 31 August 2021 in <a href="https://apalos.github.io/category/uefi.html">UEFI</a>
+      Posted on Tue 04 January 2022 in <a href="/category/uefi.html">UEFI</a>
 
         &#8226; 5 min read
     </p>
@@ -152,15 +152,14 @@ there's another solution.</p>
 TPM emulator that works under QEMU.  It provides a memory mapped device which
 adheres to the <a href="https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientTPMInterfaceSpecification_TIS__1-3_27_03212013.pdf" target="_blank">TCG TPM Interface Specification</a>.
 The problem is that U-Boot had no support for memory mapped TPMs,  which is
-exactly what <a href="https://lore.kernel.org/u-boot/20211109070223.76456-1-ilias.apalodimas@linaro.org/" target="_blank">this</a> patchset does.</p>
+exactly what <a href="https://lore.kernel.org/u-boot/20210707162604.84196-1-ilias.apalodimas@linaro.org/" target="_blank">this</a> patchset does.</p>
 <h3><strong>Building U-Boot</strong></h3>
-<p><s>At the time of this article the U-Boot patches are under review, so we need to
+<p>At the time of this article the U-Boot patches are under review, so we need to
 apply them manually.</p>
-<p>So download the patches prepare your U-Boot binary.</s>
-Patches are now in U-Boot mainline and the arm64 defconfig has the
-required config options enabled.</p>
+<p>So download the patches prepare your U-Boot binary.</p>
 <div class="highlight"><pre><span></span><code>git clone https://github.com/u-boot/u-boot.git
 <span class="nb">pushd</span> u-boot
+git am &lt;patches <span class="k">for</span> mmio tpm support&gt;
 make qemu_arm64_defconfig
 make menuconfig
 </code></pre></div>
@@ -511,11 +510,13 @@ If you don't have them install them with</p>
   </div>
   <div class="tag-cloud">
     <p>
-      <a href="https://apalos.github.io/tag/bootloaders.html">Bootloaders</a>
-      <a href="https://apalos.github.io/tag/security.html">Security</a>
-      <a href="https://apalos.github.io/tag/u-boot.html">U-Boot</a>
-      <a href="https://apalos.github.io/tag/uefi.html">UEFI</a>
-      <a href="https://apalos.github.io/tag/tpm.html">TPM</a>
+      <a href="/tag/bootloaders.html">Bootloaders</a>
+      <a href="/tag/security.html">Security</a>
+      <a href="/tag/u-boot.html">U-Boot</a>
+      <a href="/tag/uefi.html">UEFI</a>
+      <a href="/tag/tpm.html">TPM</a>
+      <a href="/tag/measured-boot.html">Measured Boot</a>
+      <a href="/tag/secure-boot.html">Secure Boot</a>
     </p>
   </div>
 
@@ -539,8 +540,8 @@ Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a 
 {
   "@context" : "http://schema.org",
   "@type" : "Blog",
-  "name": " Volatile rumblings ",
-  "url" : "https://apalos.github.io",
+  "name": " Volatile rumblings of a spotted mind ",
+  "url" : "",
   "image": "site_images/profile.png",
   "description": ""
 }

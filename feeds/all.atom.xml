@@ -1,5 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Volatile rumblings of a spotted mind</title><link href="https://apalos.github.io/" rel="alternate"></link><link href="https://apalos.github.io/feeds/all.atom.xml" rel="self"></link><id>https://apalos.github.io/</id><updated>2021-08-31T10:20:00+03:00</updated><subtitle>Volatile rumblings of a spotted mind</subtitle><entry><title>EFI TCG2 protocol in U-Boot and QEMU</title><link href="https://apalos.github.io/EFI%20TCG2%20protocol%20in%20U-Boot%20and%20QEMU.html" rel="alternate"></link><published>2021-08-31T10:20:00+03:00</published><updated>2021-08-31T10:20:00+03:00</updated><author><name>Ilias Apalodimas</name></author><id>tag:apalos.github.io,2021-08-31:/EFI TCG2 protocol in U-Boot and QEMU.html</id><summary type="html">&lt;p&gt;TPMs are starting to play an important role in system security and integrity. &lt;br&gt;So let's take a look on the latest U-Boot additions enabling TPMs when booting with UEFI&lt;/p&gt;</summary><content type="html">&lt;h6&gt;&lt;/h6&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Volatile rumblings</title><link href="https://apalos.github.io/" rel="alternate"></link><link href="https://apalos.github.io/feeds/all.atom.xml" rel="self"></link><id>https://apalos.github.io/</id><updated>2022-01-21T09:20:00+02:00</updated><subtitle>Volatile rumblings</subtitle><entry><title>(Cheap) UEFI Measured boot on DeveloperBox</title><link href="https://apalos.github.io/Measured%20boot%20on%20DeveloperBox.html" rel="alternate"></link><published>2022-01-21T09:20:00+02:00</published><updated>2022-01-21T09:20:00+02:00</updated><author><name>Ilias Apalodimas</name></author><id>tag:apalos.github.io,2022-01-21:/Measured boot on DeveloperBox.html</id><summary type="html">&lt;p&gt;UEFI Secure and measured Boot is the minimal basis for a trustworthy device nowadays. &lt;br&gt; Let's take a look on how modern U-Boot with the help of OP-TEE can provide that without any specialized hardware.&lt;/p&gt;</summary><content type="html">&lt;h6&gt;&lt;/h6&gt;
+&lt;p&gt;&lt;link rel="stylesheet" href="overload.css"&gt;&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;How can measured boot help&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;TPMs are microcontrollers designed for cryptographic tasks. Don’t think of them
+as crypto accelerators though, cryptographic operations on your CPU will (almost)
+always be faster.&lt;/p&gt;
+&lt;p&gt;Even so TPMs have the ability to wrap and tie a key into certain platform measurements.  This is
+called key sealing.  The platform measurements are stored in Platform Configuration Registers, or for short, PCRs.
+PCRs are zeroed out on the platform boot and can only be reset on a system reboot.
+They can be extended by writing a SHA hash (typically SHA-1,256 for TPMv2) into the PCR.
+When a PCR is extended the hardware concatenates the new hash to the existing 
+PCR value and new SHA is stored.&lt;/p&gt;
+&lt;p&gt;U-Boot supports &lt;a href="https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf"&gt;EFI TCG2&lt;/a&gt;.
+Its purpose is to define APIs and provide information, for things like, is a TPM 
+present, which PCR banks are active,  obtain the TCG boot log, extend hashes to PCRs,
+append events to the TCG boot log etc. &lt;/p&gt;
+&lt;p&gt;So you can effectively encrypt your root filesystem and store the decryption
+key safely in your TPM.  That key will only be released if the TPM PCRs
+contain the exact same values that they had when the key was sealed.&lt;/p&gt;
+&lt;p&gt;The PCR usage is described
+&lt;a href="https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClient_PFP_r1p05_v23_pub.pdf"&gt;here&lt;/a&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;PCR0:&lt;/strong&gt; SRTM, BIOS, Host Platform Extensions, Embedded Option ROMs and PI Drivers&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR1:&lt;/strong&gt; Host Platform Configuration&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR2:&lt;/strong&gt; UEFI driver and application Code&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR3:&lt;/strong&gt; UEFI driver and application Configuration and Data&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR4:&lt;/strong&gt; UEFI Boot Manager Code (usually the MBR) and Boot Attempts&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR5:&lt;/strong&gt; Boot Manager Code Configuration and Data (for use by the Boot Manager Code) and GPT/Partition Table&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR6:&lt;/strong&gt; Host Platform Manufacturer Specific&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR7:&lt;/strong&gt; Secure Boot Policy&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR8-15:&lt;/strong&gt; Defined for use by the Static OS&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR16:&lt;/strong&gt; Debug&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;PCR23:&lt;/strong&gt; Application Support&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;&lt;strong&gt;Why the DeveloperBox&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;A while ago I explained how storing EFI Variables into an RPMB partition of an 
+&lt;a href="https://apalos.github.io/Protected%20UEFI%20variables%20with%20U-Boot.html#Protected%20UEFI%20variables%20with%20U-Boot"&gt;eMMC&lt;/a&gt; works.
+There's basically three requirements.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Your hardware has OP-TEE support&lt;/li&gt;
+&lt;li&gt;A working eMMC in U-Boot and Linux&lt;/li&gt;
+&lt;li&gt;Upstream U-Boot support&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;With an eMMC available we can also use Microsoft's firmware TPM (or &lt;a href="https://github.com/microsoft/ms-tpm-20-ref/"&gt;fTPM&lt;/a&gt;)
+and enable measured boot.&lt;/p&gt;
+&lt;p&gt;This is the only &lt;a href="https://www.96boards.org/product/developerbox/"&gt;hardware&lt;/a&gt;
+I had available which abides to those requirements. 
+However what you'll read here applies to any board that has identical features.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Compiling (a lot)&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;There's &lt;strong&gt;a lot&lt;/strong&gt; of firmware components that need to be compiled for this to work.
+Just for reference you will need&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://github.com/ARM-software/SCP-firmware.git"&gt;SCP-firmware&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/ARM-software/arm-trusted-firmware.git"&gt;TF-A&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/OP-TEE/optee_os"&gt;OP-TEE&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/u-boot/u-boot.git"&gt;U-Boot&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/tianocore/edk2.git"&gt;EDK2&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/tianocore/edk2-platforms.git"&gt;StandAloneMM from edk2-platforms&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/microsoft/ms-tpm-20-ref/"&gt;fTPM&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;You'll also need complex instructions on how to compile those and assemble the
+image as well as some not (yet) upstreamed patches.
+Fortunately there's an OpenEmbedded layer from Linaro that can do this for us
+on the DeveloperBox.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git clone https://git.codelinaro.org/linaro/dependable-boot/meta-ts.git
+&lt;span class="nb"&gt;cd&lt;/span&gt; meta-ts
+kas build ci/synquacer.yml
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;&lt;strong&gt;Updating the firmware&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;You can find detailed instructions &lt;a href="https://www.96boards.org/documentation/enterprise/developerbox/installation/board-recovery.md.html#update-using-serial-flasher"&gt;here&lt;/a&gt;
+The tl;dr version is flip DSW2-7 to enable the serial flasher, open your minicom and use xmodem to
+send and update the files.&lt;/p&gt;
+&lt;p&gt;All the files you need will be located at &lt;code&gt;build/tmp/deploy/images/synquacer/&lt;/code&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;flash write cm3 -&amp;gt;  Control-A S -&amp;gt; send scp_romramfw_release.bin
+flash write arm-tf -&amp;gt; Control-A S -&amp;gt; send fip_all_arm_tf_optee.bin
+flash rawwrite 0x500000 0x100000  -&amp;gt; Control-A S -&amp;gt; send optee/tee-pager_v2.bin
+flash rawwrite 0x200000 0x100000 -&amp;gt; Control-A S -&amp;gt; send u-boot.bin
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h2&gt;&lt;strong&gt;Install a distro&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;I am using
+&lt;a href="https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/aarch64/iso/Fedora-Server-netinst-aarch64-35-1.2.iso"&gt;Fedora&lt;/a&gt; 
+on the example here,  but since the U-Boot versions since 2021.04 are 
+SystemReady-IR compliant any COTS distro should work.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo dd &lt;span class="k"&gt;if&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;Fedora-Server-netinst-aarch64-35-1.2.iso &lt;span class="nv"&gt;of&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;/dev/sdX &lt;span class="nv"&gt;bs&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;128M &lt;span class="nv"&gt;status&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;progress
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Plug your usb stick in a port and start up the board.
+In U-Boot's console do&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;usb reset
+load usb &lt;span class="m"&gt;0&lt;/span&gt; &lt;span class="nv"&gt;$kernel_addr_r&lt;/span&gt; efi/boot/BOOTAA64.EFI &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; bootefi &lt;span class="nv"&gt;$kernel_addr_r&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Since I am using the box in headless mode,  installing via VNC is a nice option to avoid
+the console nuisance.&lt;/p&gt;
+&lt;p&gt;&lt;img src="site_images/vnc.png" alt="VNC"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Make sure you encrypt the filesystem using a password as we'll be 
+needing this later on&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src="site_images/encrypt.png" alt="Encrypt FS"&gt;&lt;/p&gt;
+&lt;p&gt;It's worth noting that since U-Boot does not support SetVariable at runtime you'll get an error
+while the installer is trying to update the EFI Boot#### variables.  This is far from fatal,  you
+can just continue the installation and fix up the boot options later.&lt;/p&gt;
+&lt;p&gt;&lt;img src="site_images/error.png" alt="SetVariable Error"&gt;&lt;/p&gt;
+&lt;p&gt;Once the installation completes, you will have 3 partitions: EFI, boot, and the luks encrypted root.&lt;/p&gt;
+&lt;p&gt;Reboot your board and stop U-Boot at it's console.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;nvme scan
+efidebug boot add -b &lt;span class="m"&gt;0&lt;/span&gt; Fedora nvme &lt;span class="m"&gt;0&lt;/span&gt; EFI/fedora/shimaa64.efi
+efidebug boot order &lt;span class="m"&gt;0&lt;/span&gt;
+bootefi bootmgr
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;That should set SHIM as your first boot choice.&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;Enabling fTPM&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;The kernel modules needed for Microsoft's &lt;a href="https://github.com/microsoft/ms-tpm-20-ref/"&gt;fTPM&lt;/a&gt;
+are included in the Fedora35 kernel.  However,  since it relies on OP-TEE to 
+provide the RPMB access,  you need to start the TEE supplicant before the module gets inserted.&lt;/p&gt;
+&lt;h3&gt;Compiling optee_client&lt;/h3&gt;
+&lt;p&gt;On the target system, get a copy of optee_client compile it and install it.  The default installation will end up on
+&lt;code&gt;/usr/local/sbin&lt;/code&gt;&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git clone https://github.com/OP-TEE/optee_client.git
+&lt;span class="nb"&gt;cd&lt;/span&gt; optee_client &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; mkdir build &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="nb"&gt;cd&lt;/span&gt; build
+cmake ../ -DRPMB_EMU&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;0&lt;/span&gt;
+make -j&lt;span class="k"&gt;$(&lt;/span&gt;nproc&lt;span class="k"&gt;)&lt;/span&gt;
+sudo make install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Enabling fTPM on systemd&lt;/h3&gt;
+&lt;p&gt;Create &lt;code&gt;/etc/systemd/system/tee-supplicant.service&lt;/code&gt;  with the following contents&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="o"&gt;[&lt;/span&gt;Unit&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;span class="nv"&gt;Description&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;tee supplicant
+
+&lt;span class="o"&gt;[&lt;/span&gt;Service&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;span class="nv"&gt;User&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;root
+&lt;span class="nv"&gt;ExecStart&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;tee-supplicant
+&lt;span class="nv"&gt;Restart&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;always
+
+&lt;span class="o"&gt;[&lt;/span&gt;Install&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;span class="nv"&gt;WantedBy&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;sysinit.target
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;and enable the service&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo systemctl &lt;span class="nb"&gt;enable&lt;/span&gt; tee-supplicant
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;If you reboot your system now your firmwareTPM should be operational.
+You can check the logs with &lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo tpm2_eventlog /sys/kernel/security/tpm0/binary_bios_measurements
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Sealing the key&lt;/h3&gt;
+&lt;p&gt;Remember when you installed an encrypted filesystem?  With the TPM up and running now
+you can automate the decryption of your root filesystem.&lt;/p&gt;
+&lt;p&gt;Fedora has clevis,  an automated encryption framework,  which can make your life easier
+as far as key sealing and unsealing is concerned.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo dnf install clevis clevis-luks clevis-dracut clevis-udisks2 clevis-systemd
+sudo clevis luks &lt;span class="nb"&gt;bind&lt;/span&gt; -d /dev/nvme0n1p3 tpm2 &lt;span class="s1"&gt;&amp;#39;{&amp;quot;pcr_ids&amp;quot;:&amp;quot;0,1,2,3,4,5,6,7&amp;quot;}&amp;#39;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;h3&gt;Adding tee-supplicant to your initramfs&lt;/h3&gt;
+&lt;p&gt;As we mentioned the fTPM relies on the op-tee supplicant for the RPMB accesses.  So the missing
+piece of the puzzle in order to access your TPM, unseal your key and decrypt the
+filesystem,  is create an initramfs with the needed modules and the tee-supplicant.&lt;/p&gt;
+&lt;p&gt;Create &lt;code&gt;/usr/lib/dracut/modules.d/60tee-supplicant/&lt;/code&gt; directory, copy the 
+&lt;code&gt;/etc/systemd/system/tee-supplicant.service&lt;/code&gt; we created earlier and&lt;br&gt;
+add a &lt;code&gt;module-setup.sh&lt;/code&gt; file with the following contents.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="ch"&gt;#!/usr/bin/bash&lt;/span&gt;
+check&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    require_binaries /usr/local/sbin/tee-supplicant &lt;span class="o"&gt;||&lt;/span&gt; &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="m"&gt;0&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+depends&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="m"&gt;0&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+install&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    inst /usr/local/sbin/tee-supplicant /sbin/tee-supplicant
+    inst &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$moddir&lt;/span&gt;&lt;span class="s2"&gt;/tee-supplicant.service&amp;quot;&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$systemdsystemunitdir&lt;/span&gt;&lt;span class="s2"&gt;/tee-supplicant.service&amp;quot;&lt;/span&gt;
+    &lt;span class="nv"&gt;$SYSTEMCTL&lt;/span&gt; -q --root &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$initdir&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt; add-wants cryptsetup.target tee-supplicant.service
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+installkernel&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="nv"&gt;hostonly&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt; &lt;span class="nv"&gt;instmods&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;drivers/char/tpm
+    instmods tee optee
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;You can now re-create your initramfs with&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;sudo dracut --add clevis-pin-tpm2 --add tee-supplicant --force
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;If everything is setup correctly you should see something along the lines of this on your screen&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;Welcome to Fedora Linux &lt;span class="m"&gt;35&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;Server Edition&lt;span class="o"&gt;)&lt;/span&gt; dracut-055-6.fc35 &lt;span class="o"&gt;(&lt;/span&gt;Initramfs&lt;span class="o"&gt;)&lt;/span&gt;!
+&amp;lt;snip&amp;gt;
+&lt;span class="o"&gt;[&lt;/span&gt;  OK  &lt;span class="o"&gt;]&lt;/span&gt; Reached target Basic System.
+         Starting Cryptography Setu…8ff0-43f6-9484-b4f16ff43093...
+&lt;span class="o"&gt;[&lt;/span&gt;  OK  &lt;span class="o"&gt;]&lt;/span&gt; Started tee supplicant.
+Please enter passphrase &lt;span class="k"&gt;for&lt;/span&gt; disk Samsung SSD &lt;span class="m"&gt;960&lt;/span&gt; EVO 250GB &lt;span class="o"&gt;(&lt;/span&gt;luks-5fe9fed9-8ff0-43f6-9484-b4f16ff43093&lt;span class="o"&gt;)&lt;/span&gt;:
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;but this time you won't have to supply a password!&lt;/p&gt;
+&lt;h2&gt;&lt;strong&gt;UEFI Secure Boot&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;At the time of the writing,  due to toolchain complications,  Fedora isn't
+signing their SHIM.  Once this get's fixed we'll follow up on UEFI Secure Boot.&lt;/p&gt;</content><category term="Bootloaders"></category><category term="Security"></category><category term="U-Boot"></category><category term="UEFI"></category><category term="TPM"></category><category term="Measured Boot"></category><category term="Secure Boot"></category></entry><entry><title>EFI TCG2 protocol in U-Boot and QEMU</title><link href="https://apalos.github.io/EFI%20TCG2%20protocol%20in%20U-Boot%20and%20QEMU.html" rel="alternate"></link><published>2021-08-31T10:20:00+03:00</published><updated>2021-08-31T10:20:00+03:00</updated><author><name>Ilias Apalodimas</name></author><id>tag:apalos.github.io,2021-08-31:/EFI TCG2 protocol in U-Boot and QEMU.html</id><summary type="html">&lt;p&gt;TPMs are starting to play an important role in system security and integrity. &lt;br&gt;So let's take a look on the latest U-Boot additions enabling TPMs when booting with UEFI&lt;/p&gt;</summary><content type="html">&lt;h6&gt;&lt;/h6&gt;
 &lt;p&gt;&lt;link rel="stylesheet" href="overload.css"&gt;&lt;/p&gt;
 &lt;h2&gt;&lt;strong&gt;Do I need a TPM?&lt;/strong&gt;&lt;/h2&gt;
 &lt;p&gt;I won't go into details regarding why a TPM is useful.  There is an excellent 
@@ -27,14 +231,15 @@ there's another solution.&lt;/p&gt;
 TPM emulator that works under QEMU.  It provides a memory mapped device which
 adheres to the &lt;a href="https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientTPMInterfaceSpecification_TIS__1-3_27_03212013.pdf" target="_blank"&gt;TCG TPM Interface Specification&lt;/a&gt;.
 The problem is that U-Boot had no support for memory mapped TPMs,  which is
-exactly what &lt;a href="https://lore.kernel.org/u-boot/20210707162604.84196-1-ilias.apalodimas@linaro.org/" target="_blank"&gt;this&lt;/a&gt; patchset does.&lt;/p&gt;
+exactly what &lt;a href="https://lore.kernel.org/u-boot/20211109070223.76456-1-ilias.apalodimas@linaro.org/" target="_blank"&gt;this&lt;/a&gt; patchset does.&lt;/p&gt;
 &lt;h3&gt;&lt;strong&gt;Building U-Boot&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;At the time of this article the U-Boot patches are under review, so we need to
+&lt;p&gt;&lt;s&gt;At the time of this article the U-Boot patches are under review, so we need to
 apply them manually.&lt;/p&gt;
-&lt;p&gt;So download the patches prepare your U-Boot binary.&lt;/p&gt;
+&lt;p&gt;So download the patches prepare your U-Boot binary.&lt;/s&gt;
+Patches are now in U-Boot mainline and the arm64 defconfig has the
+required config options enabled.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;git clone https://github.com/u-boot/u-boot.git
 &lt;span class="nb"&gt;pushd&lt;/span&gt; u-boot
-git am &amp;lt;patches &lt;span class="k"&gt;for&lt;/span&gt; mmio tpm support&amp;gt;
 make qemu_arm64_defconfig
 make menuconfig
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
