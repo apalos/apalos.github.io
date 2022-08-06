@@ -1,2 +1,0 @@
-# apalos.github.io
-Blog
