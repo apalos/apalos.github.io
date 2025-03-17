@@ -22,7 +22,6 @@
   <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/solid.css">
 
 
-    <link href="https://apalos.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Volatile rumblings Atom">
 
 
 
@@ -107,7 +106,6 @@
       <a href="/categories.html">Categories</a>
       <a href="/tags.html">Tags</a>
 
-      <a href="https://apalos.github.io/feeds/all.atom.xml">Atom</a>
 
     </nav>
 
@@ -182,39 +180,39 @@ On the other hand if we choose to make it a TA (Trusted Application) we use <s>o
 have to compile that extra TA and link it to OP-TEE as an EarlyTA anyway.</p>
 <h2><strong>Building</strong></h2>
 <h3><strong>Building TFA</strong></h3>
-<div class="highlight"><pre><span></span><code>mkdir firmware <span class="o">&amp;&amp;</span> <span class="nb">cd</span> firmware/
-git clone https://github.com/ARM-software/arm-trusted-firmware
-<span class="nb">pushd</span> arm-trusted-firmware/
-make <span class="nv">CROSS_COMPILE</span><span class="o">=</span>aarch64-linux-gnu- <span class="nv">ARCH</span><span class="o">=</span>aarch64 <span class="nv">PLAT</span><span class="o">=</span>&lt;board&gt; <span class="nv">TARGET_BOARD</span><span class="o">=</span>&lt;board&gt; <span class="nv">SPD</span><span class="o">=</span>opteed
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>firmware<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>firmware/
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ARM-software/arm-trusted-firmware
+<span class="nb">pushd</span><span class="w"> </span>arm-trusted-firmware/
+make<span class="w"> </span><span class="nv">CROSS_COMPILE</span><span class="o">=</span>aarch64-linux-gnu-<span class="w"> </span><span class="nv">ARCH</span><span class="o">=</span>aarch64<span class="w"> </span><span class="nv">PLAT</span><span class="o">=</span>&lt;board&gt;<span class="w"> </span><span class="nv">TARGET_BOARD</span><span class="o">=</span>&lt;board&gt;<span class="w"> </span><span class="nv">SPD</span><span class="o">=</span>opteed
 <span class="nb">popd</span>
 </code></pre></div>
 
 <h3><strong>Building EDK2</strong></h3>
 <p>At the time of this article the EDK2 patchset is under review</p>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/tianocore/edk2.git
-git clone https://github.com/tianocore/edk2-platforms.git
-<span class="nb">export</span> <span class="nv">WORKSPACE</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
-<span class="nb">export</span> <span class="nv">PACKAGES_PATH</span><span class="o">=</span><span class="nv">$WORKSPACE</span>/edk2:<span class="nv">$WORKSPACE</span>/edk2-platforms
-<span class="nb">export</span> <span class="nv">ACTIVE_PLATFORM</span><span class="o">=</span><span class="s2">&quot;Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc&quot;</span>
-<span class="nb">export</span> <span class="nv">GCC5_AARCH64_PREFIX</span><span class="o">=</span>aarch64-linux-gnu-
-<span class="nb">pushd</span> edk2/
-git submodule init <span class="o">&amp;&amp;</span> git submodule update --init --recursive
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tianocore/edk2.git
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tianocore/edk2-platforms.git
+<span class="nb">export</span><span class="w"> </span><span class="nv">WORKSPACE</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PACKAGES_PATH</span><span class="o">=</span><span class="nv">$WORKSPACE</span>/edk2:<span class="nv">$WORKSPACE</span>/edk2-platforms
+<span class="nb">export</span><span class="w"> </span><span class="nv">ACTIVE_PLATFORM</span><span class="o">=</span><span class="s2">&quot;Platform/StandaloneMm/PlatformStandaloneMmPkg/PlatformStandaloneMmRpmb.dsc&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GCC5_AARCH64_PREFIX</span><span class="o">=</span>aarch64-linux-gnu-
+<span class="nb">pushd</span><span class="w"> </span>edk2/
+git<span class="w"> </span>submodule<span class="w"> </span>init<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive
 <span class="nb">popd</span>
-<span class="nb">source</span> edk2/edksetup.sh
-make -C edk2/BaseTools
-build -p <span class="nv">$ACTIVE_PLATFORM</span> -b RELEASE -a AARCH64 -t GCC5 -n <span class="k">$(</span>nproc<span class="k">)</span>
+<span class="nb">source</span><span class="w"> </span>edk2/edksetup.sh
+make<span class="w"> </span>-C<span class="w"> </span>edk2/BaseTools
+build<span class="w"> </span>-p<span class="w"> </span><span class="nv">$ACTIVE_PLATFORM</span><span class="w"> </span>-b<span class="w"> </span>RELEASE<span class="w"> </span>-a<span class="w"> </span>AARCH64<span class="w"> </span>-t<span class="w"> </span>GCC5<span class="w"> </span>-n<span class="w"> </span><span class="k">$(</span>nproc<span class="k">)</span>
 </code></pre></div>
 
 <p>The StandAloneMM binary is located at <strong>Build/MmStandaloneRpmb/RELEASE_GCC5/FV/BL32_AP_MM.fd</strong></p>
 <h3><strong>Building OP-TEE</strong></h3>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/OP-TEE/optee_os.git
-cp Build/MmStandaloneRpmb/RELEASE_GCC5/FV/BL32_AP_MM.fd optee_os/
-<span class="nb">pushd</span> optee_os/
-<span class="nb">export</span> <span class="nv">ARCH</span><span class="o">=</span>arm
-<span class="nv">CROSS_COMPILE32</span><span class="o">=</span>arm-linux-gnueabihf- make -j32 <span class="nv">CFG_ARM64_core</span><span class="o">=</span>y <span class="nv">PLATFORM</span><span class="o">=</span>&lt;plat&gt; <span class="se">\</span>
-    <span class="nv">CFG_STMM_PATH</span><span class="o">=</span>BL32_AP_MM.fd <span class="nv">CFG_RPMB_FS</span><span class="o">=</span>y <span class="nv">CFG_RPMB_FS_DEV_ID</span><span class="o">=</span>&lt;dev id <span class="m">0</span>,1 etc&gt; <span class="se">\</span>
-    <span class="nv">CFG_CORE_HEAP_SIZE</span><span class="o">=</span><span class="m">524288</span> <span class="nv">CFG_CORE_DYN_SHM</span><span class="o">=</span>y <span class="nv">CFG_RPMB_WRITE_KEY</span><span class="o">=</span><span class="m">1</span> <span class="se">\</span>
-    <span class="nv">CFG_REE_FS</span><span class="o">=</span>n <span class="nv">CFG_CORE_ARM64_PA_BITS</span><span class="o">=</span><span class="m">48</span> <span class="nv">CFG_SCTLR_ALIGNMENT_CHECK</span><span class="o">=</span>n <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/OP-TEE/optee_os.git
+cp<span class="w"> </span>Build/MmStandaloneRpmb/RELEASE_GCC5/FV/BL32_AP_MM.fd<span class="w"> </span>optee_os/
+<span class="nb">pushd</span><span class="w"> </span>optee_os/
+<span class="nb">export</span><span class="w"> </span><span class="nv">ARCH</span><span class="o">=</span>arm
+<span class="nv">CROSS_COMPILE32</span><span class="o">=</span>arm-linux-gnueabihf-<span class="w"> </span>make<span class="w"> </span>-j32<span class="w"> </span><span class="nv">CFG_ARM64_core</span><span class="o">=</span>y<span class="w"> </span><span class="nv">PLATFORM</span><span class="o">=</span>&lt;plat&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">CFG_STMM_PATH</span><span class="o">=</span>BL32_AP_MM.fd<span class="w"> </span><span class="nv">CFG_RPMB_FS</span><span class="o">=</span>y<span class="w"> </span><span class="nv">CFG_RPMB_FS_DEV_ID</span><span class="o">=</span>&lt;dev<span class="w"> </span>id<span class="w"> </span><span class="m">0</span>,1<span class="w"> </span>etc&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">CFG_CORE_HEAP_SIZE</span><span class="o">=</span><span class="m">524288</span><span class="w"> </span><span class="nv">CFG_CORE_DYN_SHM</span><span class="o">=</span>y<span class="w"> </span><span class="nv">CFG_RPMB_WRITE_KEY</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">CFG_REE_FS</span><span class="o">=</span>n<span class="w"> </span><span class="nv">CFG_CORE_ARM64_PA_BITS</span><span class="o">=</span><span class="m">48</span><span class="w"> </span><span class="nv">CFG_SCTLR_ALIGNMENT_CHECK</span><span class="o">=</span>n<span class="w"> </span><span class="se">\</span>
 <span class="nb">popd</span>
 </code></pre></div>
 
@@ -224,25 +222,25 @@ a secure key from the hardware you might end up with the default <code>CFG_RPMB_
 <h3><strong>Building U-Boot</strong></h3>
 <p>You'll need to enable U-Boot's extra configuration options to enable this.  So clone U-Boot, apply
 your board defconfig and enable these options:</p>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/u-boot/u-boot.git
-<span class="nb">pushd</span> u-boot/
-<span class="nb">export</span> <span class="nv">CROSS_COMPILE</span><span class="o">=</span>aarch64-linux-gnu-
-<span class="nb">export</span> <span class="nv">ARCH</span><span class="o">=</span>arm64
-<span class="nb">pushd</span> u-boot
-make menuconfig ---&gt; Enable the required options
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/u-boot/u-boot.git
+<span class="nb">pushd</span><span class="w"> </span>u-boot/
+<span class="nb">export</span><span class="w"> </span><span class="nv">CROSS_COMPILE</span><span class="o">=</span>aarch64-linux-gnu-
+<span class="nb">export</span><span class="w"> </span><span class="nv">ARCH</span><span class="o">=</span>arm64
+<span class="nb">pushd</span><span class="w"> </span>u-boot
+make<span class="w"> </span>menuconfig<span class="w"> </span>---&gt;<span class="w"> </span>Enable<span class="w"> </span>the<span class="w"> </span>required<span class="w"> </span>options
 
 <span class="nv">CONFIG_OPTEE</span><span class="o">=</span>y
 <span class="nv">CONFIG_CMD_OPTEE_RPMB</span><span class="o">=</span>y
 <span class="nv">CONFIG_EFI_MM_COMM_TEE</span><span class="o">=</span>y
 
-make -j <span class="k">$(</span>nproc<span class="k">)</span>
+make<span class="w"> </span>-j<span class="w"> </span><span class="k">$(</span>nproc<span class="k">)</span>
 <span class="nb">popd</span>
 </code></pre></div>
 
 <p><strong>NOTE</strong>: U-Boot currently only supports dynamic shared memory to communicate with OP-TEE.
 Your board's OP-TEE port should register that memory in <strong>./core/arch/arm/plat-platform/main.c</strong>
 or define it in your platform DTS file.</p>
-<div class="highlight"><pre><span></span><code><span class="n">register_ddr</span><span class="p">(</span><span class="n">DRAM0_BASE</span><span class="p">,</span> <span class="n">DRAM0_SIZE</span><span class="p">);</span> <span class="o">---&gt;</span> <span class="n">replace</span> <span class="n">with</span> <span class="n">your</span> <span class="n">board</span> <span class="n">specific</span> <span class="n">ranges</span>
+<div class="highlight"><pre><span></span><code><span class="n">register_ddr</span><span class="p">(</span><span class="n">DRAM0_BASE</span><span class="p">,</span><span class="w"> </span><span class="n">DRAM0_SIZE</span><span class="p">);</span><span class="w"> </span><span class="o">---&gt;</span><span class="w"> </span><span class="n">replace</span><span class="w"> </span><span class="n">with</span><span class="w"> </span><span class="n">your</span><span class="w"> </span><span class="n">board</span><span class="w"> </span><span class="n">specific</span><span class="w"> </span><span class="n">ranges</span>
 </code></pre></div>
 
 <p>You'll otherwise get an error trying to probe OP-TEE.</p>
@@ -251,81 +249,81 @@ or define it in your platform DTS file.</p>
 for EDK2 and ArmTrustedFirmware should be standard.  For assembling the final image containing
 TF-A, OP-TEE and U-Boot refer to the vendor manual.</p>
 <p>On your first boot, if the RPMB key is not programmed, OP-TEE will do that for you.</p>
-<div class="highlight"><pre><span></span><code>D/TC:?? <span class="m">00</span> tee_rpmb_write_and_verify_key:1069 RPMB INIT: Writing Key value:
-D/TC:?? <span class="m">00</span> tee_rpmb_write_and_verify_key:1070 00000000fc142dc0  xx xx xx xx xx xx xx xx  xx xx xx xx xx xx xx xx
-D/TC:?? <span class="m">00</span> tee_rpmb_write_and_verify_key:1070 00000000fc142dd0  xx xx xx xx xx xx xx xx  xx xx xx xx xx xx xx xx
+<div class="highlight"><pre><span></span><code>D/TC:??<span class="w"> </span><span class="m">00</span><span class="w"> </span>tee_rpmb_write_and_verify_key:1069<span class="w"> </span>RPMB<span class="w"> </span>INIT:<span class="w"> </span>Writing<span class="w"> </span>Key<span class="w"> </span>value:
+D/TC:??<span class="w"> </span><span class="m">00</span><span class="w"> </span>tee_rpmb_write_and_verify_key:1070<span class="w"> </span>00000000fc142dc0<span class="w">  </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w">  </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx
+D/TC:??<span class="w"> </span><span class="m">00</span><span class="w"> </span>tee_rpmb_write_and_verify_key:1070<span class="w"> </span>00000000fc142dd0<span class="w">  </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w">  </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx<span class="w"> </span>xx
 </code></pre></div>
 
 <h3><strong>Print variables</strong></h3>
 <p>Notice OP-TEE probing before accessing the variables <strong>OP-TEE: revision 3.11 (e6e7781f)</strong></p>
-<div class="highlight"><pre><span></span><code><span class="o">=</span>&gt; printenv -e
-Found <span class="m">2</span> disks
-OP-TEE: revision <span class="m">3</span>.11 <span class="o">(</span>e6e7781f<span class="o">)</span>
+<div class="highlight"><pre><span></span><code><span class="o">=</span>&gt;<span class="w"> </span>printenv<span class="w"> </span>-e
+Found<span class="w"> </span><span class="m">2</span><span class="w"> </span>disks
+OP-TEE:<span class="w"> </span>revision<span class="w"> </span><span class="m">3</span>.11<span class="w"> </span><span class="o">(</span>e6e7781f<span class="o">)</span>
 SetupMode:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 SignatureSupport:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x40
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x40
 SecureBoot:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 certdbv:
-    d9bee56e-75dc-49d9-b4d7-b534210f637a
-    <span class="m">2103</span>-11-19 <span class="m">18</span>:43:00
-    BS<span class="p">|</span>RT<span class="p">|</span>AT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x4
+<span class="w">    </span>d9bee56e-75dc-49d9-b4d7-b534210f637a
+<span class="w">    </span><span class="m">2103</span>-11-19<span class="w"> </span><span class="m">18</span>:43:00
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>AT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x4
 AuditMode:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 DeployedMode:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 VendorKeys:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 PlatformLangCodes:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x6
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x6
 OsIndicationsSupported:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    BS<span class="p">|</span>RT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x8
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>BS<span class="p">|</span>RT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x8
 CustomMode:
-    c076ec0c-7028-4399-a072-71ee5c448b9f
-    NV<span class="p">|</span>BS, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>c076ec0c-7028-4399-a072-71ee5c448b9f
+<span class="w">    </span>NV<span class="p">|</span>BS,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 certdb:
-    d9bee56e-75dc-49d9-b4d7-b534210f637a
-    <span class="m">2103</span>-11-19 <span class="m">18</span>:43:00
-    NV<span class="p">|</span>BS<span class="p">|</span>RT<span class="p">|</span>AT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x4
+<span class="w">    </span>d9bee56e-75dc-49d9-b4d7-b534210f637a
+<span class="w">    </span><span class="m">2103</span>-11-19<span class="w"> </span><span class="m">18</span>:43:00
+<span class="w">    </span>NV<span class="p">|</span>BS<span class="p">|</span>RT<span class="p">|</span>AT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x4
 VendorKeysNv:
-    9073e4e0-60ec-4b6e-9903-4c223c260f3c
-    <span class="m">2103</span>-11-19 <span class="m">18</span>:43:00
-    NV<span class="p">|</span>BS<span class="p">|</span>AT<span class="p">|</span>RO, <span class="nv">DataSize</span> <span class="o">=</span> 0x1
+<span class="w">    </span>9073e4e0-60ec-4b6e-9903-4c223c260f3c
+<span class="w">    </span><span class="m">2103</span>-11-19<span class="w"> </span><span class="m">18</span>:43:00
+<span class="w">    </span>NV<span class="p">|</span>BS<span class="p">|</span>AT<span class="p">|</span>RO,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x1
 PlatformLang:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    NV<span class="p">|</span>BS<span class="p">|</span>RT, <span class="nv">DataSize</span> <span class="o">=</span> 0x6
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>NV<span class="p">|</span>BS<span class="p">|</span>RT,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x6
 Boot0000:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    NV<span class="p">|</span>BS<span class="p">|</span>RT, <span class="nv">DataSize</span> <span class="o">=</span> 0x78
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>NV<span class="p">|</span>BS<span class="p">|</span>RT,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>0x78
 BootOrder:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    NV<span class="p">|</span>BS<span class="p">|</span>RT, <span class="nv">DataSize</span> <span class="o">=</span> <span class="nv">0x2</span>
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>NV<span class="p">|</span>BS<span class="p">|</span>RT,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">0x2</span>
 <span class="o">=</span>&gt;
 </code></pre></div>
 
 <h3><strong>Set/Get a variable</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="o">=</span>&gt; setenv -e -nv -bs -rt test2 <span class="nv">test2</span>
-<span class="o">=</span>&gt; printenv -e test2
+<div class="highlight"><pre><span></span><code><span class="o">=</span>&gt;<span class="w"> </span>setenv<span class="w"> </span>-e<span class="w"> </span>-nv<span class="w"> </span>-bs<span class="w"> </span>-rt<span class="w"> </span>test2<span class="w"> </span><span class="nv">test2</span>
+<span class="o">=</span>&gt;<span class="w"> </span>printenv<span class="w"> </span>-e<span class="w"> </span>test2
 test2:
-    8be4df61-93ca-11d2-aa0d-00e098032b8c EFI_GLOBAL_VARIABLE_GUID
-    NV<span class="p">|</span>BS<span class="p">|</span>RT, <span class="nv">DataSize</span> <span class="o">=</span> <span class="nv">0x5</span>
+<span class="w">    </span>8be4df61-93ca-11d2-aa0d-00e098032b8c<span class="w"> </span>EFI_GLOBAL_VARIABLE_GUID
+<span class="w">    </span>NV<span class="p">|</span>BS<span class="p">|</span>RT,<span class="w"> </span><span class="nv">DataSize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">0x5</span>
 <span class="o">=</span>&gt;
 </code></pre></div>
 
 <h3><strong>Check available storage</strong></h3>
-<div class="highlight"><pre><span></span><code><span class="o">=&gt;</span> <span class="n">efidebug</span> <span class="n">query</span> <span class="o">-</span><span class="n">bs</span> <span class="o">-</span><span class="n">rt</span> <span class="o">-</span><span class="n">nv</span>
-<span class="n">Max</span> <span class="n">storage</span> <span class="n">size</span> <span class="mi">16284</span>
-<span class="n">Remaining</span> <span class="n">storage</span> <span class="n">size</span> <span class="mi">15188</span>
-<span class="n">Max</span> <span class="n">variable</span> <span class="n">size</span> <span class="mi">8132</span>
+<div class="highlight"><pre><span></span><code><span class="o">=&gt;</span><span class="w"> </span><span class="n">efidebug</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="o">-</span><span class="n">bs</span><span class="w"> </span><span class="o">-</span><span class="n">rt</span><span class="w"> </span><span class="o">-</span><span class="n">nv</span>
+<span class="n">Max</span><span class="w"> </span><span class="n">storage</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="mi">16284</span>
+<span class="n">Remaining</span><span class="w"> </span><span class="n">storage</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="mi">15188</span>
+<span class="n">Max</span><span class="w"> </span><span class="n">variable</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="mi">8132</span>
 <span class="o">=&gt;</span>
 </code></pre></div>
 

@@ -22,7 +22,6 @@
   <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/solid.css">
 
 
-    <link href="https://apalos.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Volatile rumblings Atom">
 
 
 
@@ -107,7 +106,6 @@
       <a href="/categories.html">Categories</a>
       <a href="/tags.html">Tags</a>
 
-      <a href="https://apalos.github.io/feeds/all.atom.xml">Atom</a>
 
     </nav>
 
@@ -159,10 +157,10 @@ apply them manually.</p>
 <p>So download the patches prepare your U-Boot binary.</s>
 Patches are now in U-Boot mainline and the arm64 defconfig has the
 required config options enabled.</p>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/u-boot/u-boot.git
-<span class="nb">pushd</span> u-boot
-make qemu_arm64_defconfig
-make menuconfig
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/u-boot/u-boot.git
+<span class="nb">pushd</span><span class="w"> </span>u-boot
+make<span class="w"> </span>qemu_arm64_defconfig
+make<span class="w"> </span>menuconfig
 </code></pre></div>
 
 <p>We need to enable the TPMv2 support in U-Boot 
@@ -170,39 +168,39 @@ make menuconfig
 those are selected <code>CONFIG_EFI_TCG2_PROTOCOL</code> should be automatically included.
 Make sure you enable <code>CONFIG_CMD_EFIDEBUG</code>,  since we will need it to boot our
 kernel.</p>
-<div class="highlight"><pre><span></span><code>make -j <span class="k">$(</span>nproc<span class="k">)</span>
+<div class="highlight"><pre><span></span><code>make<span class="w"> </span>-j<span class="w"> </span><span class="k">$(</span>nproc<span class="k">)</span>
 <span class="nb">popd</span>
 </code></pre></div>
 
 <h3><strong>Running QEMU</strong></h3>
 <p>Make sure swtpm is installed and running on your system.  For debian and friends 
 there's a swtpm package, so just do </p>
-<div class="highlight"><pre><span></span><code>sudo apt install swtpm
-mkdir /tmp/mytpm1
-swtpm socket --tpmstate <span class="nv">dir</span><span class="o">=</span>/tmp/mytpm1 <span class="se">\</span>
-    --ctrl <span class="nv">type</span><span class="o">=</span>unixio,path<span class="o">=</span>/tmp/mytpm1/swtpm-sock <span class="se">\</span>
-    --log <span class="nv">level</span><span class="o">=</span><span class="m">40</span> --tpm2 <span class="p">&amp;</span>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>swtpm
+mkdir<span class="w"> </span>/tmp/mytpm1
+swtpm<span class="w"> </span>socket<span class="w"> </span>--tpmstate<span class="w"> </span><span class="nv">dir</span><span class="o">=</span>/tmp/mytpm1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ctrl<span class="w"> </span><span class="nv">type</span><span class="o">=</span>unixio,path<span class="o">=</span>/tmp/mytpm1/swtpm-sock<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--log<span class="w"> </span><span class="nv">level</span><span class="o">=</span><span class="m">40</span><span class="w"> </span>--tpm2<span class="w"> </span><span class="p">&amp;</span>
 </code></pre></div>
 
 <p>and launch QEMU with swtpm support</p>
-<div class="highlight"><pre><span></span><code>sudo qemu-system-aarch64 <span class="se">\</span>
-    -bios u-boot.bin <span class="se">\</span>
-    -machine virt,gic-version<span class="o">=</span><span class="m">3</span>,accel<span class="o">=</span>kvm <span class="se">\</span>
-    -cpu host -m 4G <span class="se">\</span>
-    -nographic -no-acpi <span class="se">\</span>
-    -chardev socket,id<span class="o">=</span>chrtpm,path<span class="o">=</span>/tmp/mytpm1/swtpm-sock <span class="se">\</span>
-    -tpmdev emulator,id<span class="o">=</span>tpm0,chardev<span class="o">=</span>chrtpm <span class="se">\</span>
-    -device tpm-tis-device,tpmdev<span class="o">=</span>tpm0 <span class="se">\</span>
-    -drive <span class="nv">id</span><span class="o">=</span>disk0,file<span class="o">=</span>rootfs-linaro-buster-raw-unknown-20200720-440.ext4,if<span class="o">=</span>none,format<span class="o">=</span>raw <span class="se">\</span>
-    -device virtio-blk-device,drive<span class="o">=</span>disk0
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>qemu-system-aarch64<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-bios<span class="w"> </span>u-boot.bin<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-machine<span class="w"> </span>virt,gic-version<span class="o">=</span><span class="m">3</span>,accel<span class="o">=</span>kvm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-cpu<span class="w"> </span>host<span class="w"> </span>-m<span class="w"> </span>4G<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-nographic<span class="w"> </span>-no-acpi<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-chardev<span class="w"> </span>socket,id<span class="o">=</span>chrtpm,path<span class="o">=</span>/tmp/mytpm1/swtpm-sock<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-tpmdev<span class="w"> </span>emulator,id<span class="o">=</span>tpm0,chardev<span class="o">=</span>chrtpm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-device<span class="w"> </span>tpm-tis-device,tpmdev<span class="o">=</span>tpm0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-drive<span class="w"> </span><span class="nv">id</span><span class="o">=</span>disk0,file<span class="o">=</span>rootfs-linaro-buster-raw-unknown-20200720-440.ext4,if<span class="o">=</span>none,format<span class="o">=</span>raw<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-device<span class="w"> </span>virtio-blk-device,drive<span class="o">=</span>disk0
 </code></pre></div>
 
 <h3><strong>Booting linux</strong></h3>
 <p>From U-Boot's command line do something along the lines of</p>
-<div class="highlight"><pre><span></span><code>tpm2 startup TPM2_SU_CLEAR <span class="o">&amp;&amp;</span> virtio scan 
-efidebug boot add -b ABE0 <span class="s1">&#39;kernel&#39;</span> virtio <span class="m">0</span> boot/Image -s <span class="s1">&#39;root=/dev/vda&#39;</span>
-efidebug boot order ABE0
-bootefi bootmgr
+<div class="highlight"><pre><span></span><code>tpm2<span class="w"> </span>startup<span class="w"> </span>TPM2_SU_CLEAR<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>virtio<span class="w"> </span>scan<span class="w"> </span>
+efidebug<span class="w"> </span>boot<span class="w"> </span>add<span class="w"> </span>-b<span class="w"> </span>ABE0<span class="w"> </span><span class="s1">&#39;kernel&#39;</span><span class="w"> </span>virtio<span class="w"> </span><span class="m">0</span><span class="w"> </span>boot/Image<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;root=/dev/vda&#39;</span>
+efidebug<span class="w"> </span>boot<span class="w"> </span>order<span class="w"> </span>ABE0
+bootefi<span class="w"> </span>bootmgr
 </code></pre></div>
 
 <p>If everything is compiled and launched correctly, you should see the kernel
@@ -214,299 +212,299 @@ reporting the location of some related EventLog pointers.</p>
 <h3><strong>Reading the EventLog</strong></h3>
 <p>I am using a debian .ext4 image, where I have installed the latest tpm2 tools. 
 If you don't have them install them with</p>
-<div class="highlight"><pre><span></span><code>sudo apt install tpm2-tools
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>tpm2-tools
 </code></pre></div>
 
 <p>The kernel exposes the eventlog in /sys.  So you can read it with:</p>
-<div class="highlight"><pre><span></span><code><span class="n">tpm2_eventlog</span> <span class="sr">/sys/</span><span class="n">kernel</span><span class="o">/</span><span class="n">security</span><span class="o">/</span><span class="n">tpm0</span><span class="o">/</span><span class="n">binary_bios_measurements</span>
+<div class="highlight"><pre><span></span><code><span class="n">tpm2_eventlog</span><span class="w"> </span><span class="sr">/sys/</span><span class="n">kernel</span><span class="o">/</span><span class="n">security</span><span class="o">/</span><span class="n">tpm0</span><span class="o">/</span><span class="n">binary_bios_measurements</span>
 <span class="o">---</span>
 <span class="ss">events</span><span class="p">:</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">0</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">0</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_NO_ACTION</span>
-    <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;0000000000000000000000000000000000000000&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">37</span>
-    <span class="ss">SpecID</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">Signature</span><span class="p">:</span> <span class="no">Spec</span> <span class="no">ID</span> <span class="no">Event03</span>
-        <span class="ss">platformClass</span><span class="p">:</span> <span class="mi">0</span>
-        <span class="ss">specVersionMinor</span><span class="p">:</span> <span class="mi">0</span>
-        <span class="ss">specVersionMajor</span><span class="p">:</span> <span class="mi">2</span>
-        <span class="ss">specErrata</span><span class="p">:</span> <span class="mi">2</span>
-        <span class="ss">uintnSize</span><span class="p">:</span> <span class="mi">2</span>
-        <span class="ss">numberOfAlgorithms</span><span class="p">:</span> <span class="mi">2</span>
-        <span class="ss">Algorithms</span><span class="p">:</span>
-          <span class="o">-</span> <span class="no">Algorithm</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="p">:</span>
-            <span class="ss">algorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-            <span class="ss">digestSize</span><span class="p">:</span> <span class="mi">20</span>
-          <span class="o">-</span> <span class="no">Algorithm</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span><span class="p">:</span>
-            <span class="ss">algorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-            <span class="ss">digestSize</span><span class="p">:</span> <span class="mi">32</span>
-        <span class="ss">vendorInfoSize</span><span class="p">:</span> <span class="mi">0</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">1</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">0</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_S_CRTM_VERSION</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;0772fd675fbebcdd4401008ee8d609760c1675df&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;69f66450f9a8780cf2fbab358d46b8fabd4b7e9ae886b3d80083646c30e91b4c&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">74</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;552d426f6f7420323032312e31302d7263322d30303031302d67643536666231666138352d646972747920284175672032342032303231202d2030363a33343a3335202b303830302900&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;57cd4dc19442475aa82743484f3b1caa88e142b8&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;115aa827dbccfb44d216ad9ecfda56bdea620b860a94bed5b7a27bba1c4d02d8&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">53</span>
-    <span class="ss">Event</span><span class="p">:</span>
-      <span class="ss">VariableName</span><span class="p">:</span> <span class="mi">61</span><span class="n">dfe48b</span><span class="o">-</span><span class="n">ca93</span><span class="o">-</span><span class="n">d211</span><span class="o">-</span><span class="n">aa0d</span><span class="o">-</span><span class="mo">00</span><span class="n">e098032b8c</span>
-      <span class="ss">UnicodeNameLength</span><span class="p">:</span> <span class="mi">10</span>
-      <span class="ss">VariableDataLength</span><span class="p">:</span> <span class="mi">1</span>
-      <span class="ss">UnicodeName</span><span class="p">:</span> <span class="no">SecureBoot</span>
-      <span class="ss">VariableData</span><span class="p">:</span> <span class="s2">&quot;00&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">3</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9b1387306ebb7ff8e795e7be77563666bbf4516e&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;dea7b80ab53a3daaa24d5cc46c64e1fa9ffd03739f90aadbd8c0867c4a5b4890&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">36</span>
-    <span class="ss">Event</span><span class="p">:</span>
-      <span class="ss">VariableName</span><span class="p">:</span> <span class="mi">61</span><span class="n">dfe48b</span><span class="o">-</span><span class="n">ca93</span><span class="o">-</span><span class="n">d211</span><span class="o">-</span><span class="n">aa0d</span><span class="o">-</span><span class="mo">00</span><span class="n">e098032b8c</span>
-      <span class="ss">UnicodeNameLength</span><span class="p">:</span> <span class="mi">2</span>
-      <span class="ss">VariableDataLength</span><span class="p">:</span> <span class="mi">0</span>
-      <span class="ss">UnicodeName</span><span class="p">:</span> <span class="no">PK</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9afa86c507419b8570c62167cb9486d9fc809758&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;e670e121fcebd473b8bc41bb801301fc1d9afa33904f06f7149b74f12c47a68f&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">38</span>
-    <span class="ss">Event</span><span class="p">:</span>
-      <span class="ss">VariableName</span><span class="p">:</span> <span class="mi">61</span><span class="n">dfe48b</span><span class="o">-</span><span class="n">ca93</span><span class="o">-</span><span class="n">d211</span><span class="o">-</span><span class="n">aa0d</span><span class="o">-</span><span class="mo">00</span><span class="n">e098032b8c</span>
-      <span class="ss">UnicodeNameLength</span><span class="p">:</span> <span class="mi">3</span>
-      <span class="ss">VariableDataLength</span><span class="p">:</span> <span class="mi">0</span>
-      <span class="ss">UnicodeName</span><span class="p">:</span> <span class="no">KEK</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">5</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;5bf8faa078d40ffbd03317c93398b01229a0e1e0&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;baf89a3ccace52750c5f0128351e0422a41597a1adfd50822aa363b9d124ea7c&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">36</span>
-    <span class="ss">Event</span><span class="p">:</span>
-      <span class="ss">VariableName</span><span class="p">:</span> <span class="n">cbb219d7</span><span class="o">-</span><span class="mi">3</span><span class="n">a3d</span><span class="o">-</span><span class="mi">9645</span><span class="o">-</span><span class="n">a3bc</span><span class="o">-</span><span class="n">dad00e67656f</span>
-      <span class="ss">UnicodeNameLength</span><span class="p">:</span> <span class="mi">2</span>
-      <span class="ss">VariableDataLength</span><span class="p">:</span> <span class="mi">0</span>
-      <span class="ss">UnicodeName</span><span class="p">:</span> <span class="n">db</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">6</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;734424c9fe8fc71716c42096f4b74c88733b175e&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9f75b6823bff6af1024a4e2036719cdd548d3cbc2bf1de8e7ef4d0ed01f94bf9&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">38</span>
-    <span class="ss">Event</span><span class="p">:</span>
-      <span class="ss">VariableName</span><span class="p">:</span> <span class="n">cbb219d7</span><span class="o">-</span><span class="mi">3</span><span class="n">a3d</span><span class="o">-</span><span class="mi">9645</span><span class="o">-</span><span class="n">a3bc</span><span class="o">-</span><span class="n">dad00e67656f</span>
-      <span class="ss">UnicodeNameLength</span><span class="p">:</span> <span class="mi">3</span>
-      <span class="ss">VariableDataLength</span><span class="p">:</span> <span class="mi">0</span>
-      <span class="ss">UnicodeName</span><span class="p">:</span> <span class="n">dbx</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_BOOT_SERVICES_APPLICATION</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;d2702383b2e042ebefbb318f9382fd094c1c2d6b&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;8fb6a4c7a0c7e7f22b944906eb07786cd3860394c7929e7c0768b2c99a2a3d87&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">162</span>
-    <span class="ss">Event</span><span class="p">:</span>
-      <span class="ss">ImageLocationInMemory</span><span class="p">:</span> <span class="mh">0x7adb3000</span>
-      <span class="ss">ImageLengthInMemory</span><span class="p">:</span> <span class="mi">893720</span>
-      <span class="ss">ImageLinkTimeAddress</span><span class="p">:</span> <span class="mh">0x0</span>
-      <span class="ss">LengthOfDevicePath</span><span class="p">:</span> <span class="mi">130</span>
-      <span class="ss">DevicePath</span><span class="p">:</span> <span class="s2">&quot;01041400b9731de684a3cc4aaeab82e828f3628b031d050002031d05000104012a0001000000009800000000000000f805000000000050641c65888b6b418f2257061a9dc3c50202040436005c004500460049005c00640065006200690061006e005c007300680069006d0061006100360034002e0065006600690000007fff0400&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">8</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">1</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">Unknown</span> <span class="n">event</span> <span class="n">type</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;50eb6bd100c48e81644d666a437725f49c6aed3c&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;eb881b78feeb95756141a8d5358b891b297fad61b296f667de1f59b66bc92f4f&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">52</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;61dfe48bca93d211aa0d00e098032b8c0900000000000000020000000000000042006f006f0074004f0072006400650072000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">9</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">1</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">Unknown</span> <span class="n">event</span> <span class="n">type</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;74e29a0674816dfdfc2c2e9cbbcec357132da4e8&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;5d123811f51e2e46c437c7e88e07053c81f4e63da3f11de8a8a2afb5334db137&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">198</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;61dfe48bca93d211aa0d00e098032b8c0800000000000000960000000000000042006f006f0074003000300030003000010000008200640065006200690061006e00000001041400b9731de684a3cc4aaeab82e828f3628b031d050002031d05000104012a0001000000009800000000000000f805000000000050641c65888b6b418f2257061a9dc3c50202040436005c004500460049005c00640065006200690061006e005c007300680069006d0061006100360034002e0065006600690000007fff0400&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">10</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_ACTION</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;cd0fdb4531a6ec41be2753ba042637d6e5f7f256&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;3d6772b4f84ed47595d72a2c4c5ffd15f5bb72c7507fe26f2aaee2c69d5633ba&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">40</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s1">&#39;Calling EFI Application from Boot Option&#39;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">11</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">0</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">12</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">1</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">13</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">14</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">3</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">15</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">16</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">5</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">17</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">6</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">18</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">7</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_SEPARATOR</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">4</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s2">&quot;00000000&quot;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">19</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">5</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_ACTION</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;443a6b7b82b7af564f2e393cd9d5a388b7fa4a98&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;d8043d6b7b85ad358eb3b6ae6a873ab7ef23a26352c5dc4faa5aeedacf5eb41b&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">29</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s1">&#39;Exit Boot Services Invocation&#39;</span>
-  <span class="o">-</span> <span class="ss">EventNum</span><span class="p">:</span> <span class="mi">20</span>
-    <span class="ss">PCRIndex</span><span class="p">:</span> <span class="mi">5</span>
-    <span class="ss">EventType</span><span class="p">:</span> <span class="no">EV_EFI_ACTION</span>
-    <span class="ss">DigestCount</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="ss">Digests</span><span class="p">:</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha1</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;475545ddc978d7bfd036facc7e2e987f48189f0d&quot;</span>
-      <span class="o">-</span> <span class="ss">AlgorithmId</span><span class="p">:</span> <span class="n">sha256</span>
-        <span class="ss">Digest</span><span class="p">:</span> <span class="s2">&quot;b54f7542cbd872a81a9d9dea839b2b8d747c7ebd5ea6615c40f42f44a6dbeba0&quot;</span>
-    <span class="ss">EventSize</span><span class="p">:</span> <span class="mi">40</span>
-    <span class="ss">Event</span><span class="p">:</span> <span class="s1">&#39;Exit Boot Services Returned with Success&#39;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_NO_ACTION</span>
+<span class="w">    </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0000000000000000000000000000000000000000&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">37</span>
+<span class="w">    </span><span class="ss">SpecID</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">Signature</span><span class="p">:</span><span class="w"> </span><span class="no">Spec</span><span class="w"> </span><span class="no">ID</span><span class="w"> </span><span class="no">Event03</span>
+<span class="w">        </span><span class="ss">platformClass</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">        </span><span class="ss">specVersionMinor</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">        </span><span class="ss">specVersionMajor</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">        </span><span class="ss">specErrata</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">        </span><span class="ss">uintnSize</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">        </span><span class="ss">numberOfAlgorithms</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">        </span><span class="ss">Algorithms</span><span class="p">:</span>
+<span class="w">          </span><span class="o">-</span><span class="w"> </span><span class="no">Algorithm</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="p">:</span>
+<span class="w">            </span><span class="ss">algorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">            </span><span class="ss">digestSize</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span>
+<span class="w">          </span><span class="o">-</span><span class="w"> </span><span class="no">Algorithm</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span><span class="p">:</span>
+<span class="w">            </span><span class="ss">algorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">            </span><span class="ss">digestSize</span><span class="p">:</span><span class="w"> </span><span class="mi">32</span>
+<span class="w">        </span><span class="ss">vendorInfoSize</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_S_CRTM_VERSION</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0772fd675fbebcdd4401008ee8d609760c1675df&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;69f66450f9a8780cf2fbab358d46b8fabd4b7e9ae886b3d80083646c30e91b4c&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">74</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;552d426f6f7420323032312e31302d7263322d30303031302d67643536666231666138352d646972747920284175672032342032303231202d2030363a33343a3335202b303830302900&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;57cd4dc19442475aa82743484f3b1caa88e142b8&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;115aa827dbccfb44d216ad9ecfda56bdea620b860a94bed5b7a27bba1c4d02d8&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">53</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span>
+<span class="w">      </span><span class="ss">VariableName</span><span class="p">:</span><span class="w"> </span><span class="mi">61</span><span class="n">dfe48b</span><span class="o">-</span><span class="n">ca93</span><span class="o">-</span><span class="n">d211</span><span class="o">-</span><span class="n">aa0d</span><span class="o">-</span><span class="mo">00</span><span class="n">e098032b8c</span>
+<span class="w">      </span><span class="ss">UnicodeNameLength</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">      </span><span class="ss">VariableDataLength</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">      </span><span class="ss">UnicodeName</span><span class="p">:</span><span class="w"> </span><span class="no">SecureBoot</span>
+<span class="w">      </span><span class="ss">VariableData</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9b1387306ebb7ff8e795e7be77563666bbf4516e&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dea7b80ab53a3daaa24d5cc46c64e1fa9ffd03739f90aadbd8c0867c4a5b4890&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">36</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span>
+<span class="w">      </span><span class="ss">VariableName</span><span class="p">:</span><span class="w"> </span><span class="mi">61</span><span class="n">dfe48b</span><span class="o">-</span><span class="n">ca93</span><span class="o">-</span><span class="n">d211</span><span class="o">-</span><span class="n">aa0d</span><span class="o">-</span><span class="mo">00</span><span class="n">e098032b8c</span>
+<span class="w">      </span><span class="ss">UnicodeNameLength</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">      </span><span class="ss">VariableDataLength</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="ss">UnicodeName</span><span class="p">:</span><span class="w"> </span><span class="no">PK</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9afa86c507419b8570c62167cb9486d9fc809758&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;e670e121fcebd473b8bc41bb801301fc1d9afa33904f06f7149b74f12c47a68f&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">38</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span>
+<span class="w">      </span><span class="ss">VariableName</span><span class="p">:</span><span class="w"> </span><span class="mi">61</span><span class="n">dfe48b</span><span class="o">-</span><span class="n">ca93</span><span class="o">-</span><span class="n">d211</span><span class="o">-</span><span class="n">aa0d</span><span class="o">-</span><span class="mo">00</span><span class="n">e098032b8c</span>
+<span class="w">      </span><span class="ss">UnicodeNameLength</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">      </span><span class="ss">VariableDataLength</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="ss">UnicodeName</span><span class="p">:</span><span class="w"> </span><span class="no">KEK</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5bf8faa078d40ffbd03317c93398b01229a0e1e0&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;baf89a3ccace52750c5f0128351e0422a41597a1adfd50822aa363b9d124ea7c&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">36</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span>
+<span class="w">      </span><span class="ss">VariableName</span><span class="p">:</span><span class="w"> </span><span class="n">cbb219d7</span><span class="o">-</span><span class="mi">3</span><span class="n">a3d</span><span class="o">-</span><span class="mi">9645</span><span class="o">-</span><span class="n">a3bc</span><span class="o">-</span><span class="n">dad00e67656f</span>
+<span class="w">      </span><span class="ss">UnicodeNameLength</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">      </span><span class="ss">VariableDataLength</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="ss">UnicodeName</span><span class="p">:</span><span class="w"> </span><span class="n">db</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_VARIABLE_DRIVER_CONFIG</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;734424c9fe8fc71716c42096f4b74c88733b175e&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9f75b6823bff6af1024a4e2036719cdd548d3cbc2bf1de8e7ef4d0ed01f94bf9&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">38</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span>
+<span class="w">      </span><span class="ss">VariableName</span><span class="p">:</span><span class="w"> </span><span class="n">cbb219d7</span><span class="o">-</span><span class="mi">3</span><span class="n">a3d</span><span class="o">-</span><span class="mi">9645</span><span class="o">-</span><span class="n">a3bc</span><span class="o">-</span><span class="n">dad00e67656f</span>
+<span class="w">      </span><span class="ss">UnicodeNameLength</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">      </span><span class="ss">VariableDataLength</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">      </span><span class="ss">UnicodeName</span><span class="p">:</span><span class="w"> </span><span class="n">dbx</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_BOOT_SERVICES_APPLICATION</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d2702383b2e042ebefbb318f9382fd094c1c2d6b&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;8fb6a4c7a0c7e7f22b944906eb07786cd3860394c7929e7c0768b2c99a2a3d87&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">162</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span>
+<span class="w">      </span><span class="ss">ImageLocationInMemory</span><span class="p">:</span><span class="w"> </span><span class="mh">0x7adb3000</span>
+<span class="w">      </span><span class="ss">ImageLengthInMemory</span><span class="p">:</span><span class="w"> </span><span class="mi">893720</span>
+<span class="w">      </span><span class="ss">ImageLinkTimeAddress</span><span class="p">:</span><span class="w"> </span><span class="mh">0x0</span>
+<span class="w">      </span><span class="ss">LengthOfDevicePath</span><span class="p">:</span><span class="w"> </span><span class="mi">130</span>
+<span class="w">      </span><span class="ss">DevicePath</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;01041400b9731de684a3cc4aaeab82e828f3628b031d050002031d05000104012a0001000000009800000000000000f805000000000050641c65888b6b418f2257061a9dc3c50202040436005c004500460049005c00640065006200690061006e005c007300680069006d0061006100360034002e0065006600690000007fff0400&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">Unknown</span><span class="w"> </span><span class="n">event</span><span class="w"> </span><span class="n">type</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;50eb6bd100c48e81644d666a437725f49c6aed3c&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eb881b78feeb95756141a8d5358b891b297fad61b296f667de1f59b66bc92f4f&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">52</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;61dfe48bca93d211aa0d00e098032b8c0900000000000000020000000000000042006f006f0074004f0072006400650072000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">Unknown</span><span class="w"> </span><span class="n">event</span><span class="w"> </span><span class="n">type</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;74e29a0674816dfdfc2c2e9cbbcec357132da4e8&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;5d123811f51e2e46c437c7e88e07053c81f4e63da3f11de8a8a2afb5334db137&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">198</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;61dfe48bca93d211aa0d00e098032b8c0800000000000000960000000000000042006f006f0074003000300030003000010000008200640065006200690061006e00000001041400b9731de684a3cc4aaeab82e828f3628b031d050002031d05000104012a0001000000009800000000000000f805000000000050641c65888b6b418f2257061a9dc3c50202040436005c004500460049005c00640065006200690061006e005c007300680069006d0061006100360034002e0065006600690000007fff0400&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_ACTION</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cd0fdb4531a6ec41be2753ba042637d6e5f7f256&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3d6772b4f84ed47595d72a2c4c5ffd15f5bb72c7507fe26f2aaee2c69d5633ba&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;Calling EFI Application from Boot Option&#39;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">11</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">13</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">16</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">17</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">18</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_SEPARATOR</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;9069ca78e7450a285173431b3e52c5c25299e473&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;00000000&quot;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">19</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_ACTION</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;443a6b7b82b7af564f2e393cd9d5a388b7fa4a98&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;d8043d6b7b85ad358eb3b6ae6a873ab7ef23a26352c5dc4faa5aeedacf5eb41b&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">29</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;Exit Boot Services Invocation&#39;</span>
+<span class="w">  </span><span class="o">-</span><span class="w"> </span><span class="ss">EventNum</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span>
+<span class="w">    </span><span class="ss">PCRIndex</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span>
+<span class="w">    </span><span class="ss">EventType</span><span class="p">:</span><span class="w"> </span><span class="no">EV_EFI_ACTION</span>
+<span class="w">    </span><span class="ss">DigestCount</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="ss">Digests</span><span class="p">:</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha1</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;475545ddc978d7bfd036facc7e2e987f48189f0d&quot;</span>
+<span class="w">      </span><span class="o">-</span><span class="w"> </span><span class="ss">AlgorithmId</span><span class="p">:</span><span class="w"> </span><span class="n">sha256</span>
+<span class="w">        </span><span class="ss">Digest</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;b54f7542cbd872a81a9d9dea839b2b8d747c7ebd5ea6615c40f42f44a6dbeba0&quot;</span>
+<span class="w">    </span><span class="ss">EventSize</span><span class="p">:</span><span class="w"> </span><span class="mi">40</span>
+<span class="w">    </span><span class="ss">Event</span><span class="p">:</span><span class="w"> </span><span class="s1">&#39;Exit Boot Services Returned with Success&#39;</span>
 <span class="ss">pcrs</span><span class="p">:</span>
-  <span class="ss">sha1</span><span class="p">:</span>
-    <span class="mi">0</span>  <span class="p">:</span> <span class="mh">0x3e26be54f5f15140afbe509cc4580538d979598d</span>
-    <span class="mi">1</span>  <span class="p">:</span> <span class="mh">0x5b4c188c39baa249f688460a63b68df6d3d3ec94</span>
-    <span class="mi">2</span>  <span class="p">:</span> <span class="mh">0xb2a83b0ebf2f8374299a5b2bdfc31ea955ad7236</span>
-    <span class="mi">3</span>  <span class="p">:</span> <span class="mh">0xb2a83b0ebf2f8374299a5b2bdfc31ea955ad7236</span>
-    <span class="mi">4</span>  <span class="p">:</span> <span class="mh">0x260ae65533f38ab643f157bd176c72f9fdece410</span>
-    <span class="mi">5</span>  <span class="p">:</span> <span class="mh">0xd16d7e629fd8d08ca256f9ad3a3a1587c9e6cc1b</span>
-    <span class="mi">6</span>  <span class="p">:</span> <span class="mh">0xb2a83b0ebf2f8374299a5b2bdfc31ea955ad7236</span>
-    <span class="mi">7</span>  <span class="p">:</span> <span class="mh">0x518bd167271fbb64589c61e43d8c0165861431d8</span>
-  <span class="ss">sha256</span><span class="p">:</span>
-    <span class="mi">0</span>  <span class="p">:</span> <span class="mh">0x7f35c1ef1bb7b9d2aee58ec4c36cf384d70524c2ce2b6801772d7fdb1d2b5f5a</span>
-    <span class="mi">1</span>  <span class="p">:</span> <span class="mh">0xf35b74319598e48a6a69a6a04e903a872558b891563b0af23c877c8472c277a6</span>
-    <span class="mi">2</span>  <span class="p">:</span> <span class="mh">0x3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969</span>
-    <span class="mi">3</span>  <span class="p">:</span> <span class="mh">0x3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969</span>
-    <span class="mi">4</span>  <span class="p">:</span> <span class="mh">0xbe4d7464e3a3c0a04040355368006a5fbe02c0ef232c8c18926df9b718374f36</span>
-    <span class="mi">5</span>  <span class="p">:</span> <span class="mh">0xa5ceb755d043f32431d63e39f5161464620a3437280494b5850dc1b47cc074e0</span>
-    <span class="mi">6</span>  <span class="p">:</span> <span class="mh">0x3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969</span>
-    <span class="mi">7</span>  <span class="p">:</span> <span class="mh">0x65caf8dd1e0ea7a6347b635d2b379c93b9a1351edc2afc3ecda700e534eb3068</span>
+<span class="w">  </span><span class="ss">sha1</span><span class="p">:</span>
+<span class="w">    </span><span class="mi">0</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x3e26be54f5f15140afbe509cc4580538d979598d</span>
+<span class="w">    </span><span class="mi">1</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x5b4c188c39baa249f688460a63b68df6d3d3ec94</span>
+<span class="w">    </span><span class="mi">2</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xb2a83b0ebf2f8374299a5b2bdfc31ea955ad7236</span>
+<span class="w">    </span><span class="mi">3</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xb2a83b0ebf2f8374299a5b2bdfc31ea955ad7236</span>
+<span class="w">    </span><span class="mi">4</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x260ae65533f38ab643f157bd176c72f9fdece410</span>
+<span class="w">    </span><span class="mi">5</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xd16d7e629fd8d08ca256f9ad3a3a1587c9e6cc1b</span>
+<span class="w">    </span><span class="mi">6</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xb2a83b0ebf2f8374299a5b2bdfc31ea955ad7236</span>
+<span class="w">    </span><span class="mi">7</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x518bd167271fbb64589c61e43d8c0165861431d8</span>
+<span class="w">  </span><span class="ss">sha256</span><span class="p">:</span>
+<span class="w">    </span><span class="mi">0</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x7f35c1ef1bb7b9d2aee58ec4c36cf384d70524c2ce2b6801772d7fdb1d2b5f5a</span>
+<span class="w">    </span><span class="mi">1</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xf35b74319598e48a6a69a6a04e903a872558b891563b0af23c877c8472c277a6</span>
+<span class="w">    </span><span class="mi">2</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969</span>
+<span class="w">    </span><span class="mi">3</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969</span>
+<span class="w">    </span><span class="mi">4</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xbe4d7464e3a3c0a04040355368006a5fbe02c0ef232c8c18926df9b718374f36</span>
+<span class="w">    </span><span class="mi">5</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0xa5ceb755d043f32431d63e39f5161464620a3437280494b5850dc1b47cc074e0</span>
+<span class="w">    </span><span class="mi">6</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969</span>
+<span class="w">    </span><span class="mi">7</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="mh">0x65caf8dd1e0ea7a6347b635d2b379c93b9a1351edc2afc3ecda700e534eb3068</span>
 </code></pre></div>
   </div>
   <div class="tag-cloud">

@@ -22,7 +22,6 @@
   <link rel="stylesheet" type="text/css" href="https://apalos.github.io/theme/font-awesome/css/solid.css">
 
 
-    <link href="https://apalos.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Volatile rumblings Atom">
 
 
 
@@ -109,7 +108,6 @@
       <a href="/categories.html">Categories</a>
       <a href="/tags.html">Tags</a>
 
-      <a href="https://apalos.github.io/feeds/all.atom.xml">Atom</a>
 
     </nav>
 
@@ -136,12 +134,12 @@ always be faster.</p>
 called key sealing.  The platform measurements are stored in Platform Configuration Registers, or for short, PCRs.
 PCRs are zeroed out on the platform boot and can only be reset on a system reboot.
 They can be extended by writing a SHA hash (typically SHA-1,256 for TPMv2) into the PCR.
-When a PCR is extended the hardware concatenates the new hash to the existing 
+When a PCR is extended the hardware concatenates the new hash to the existing
 PCR value and new SHA is stored.</p>
 <p>U-Boot supports <a href="https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf">EFI TCG2</a>.
-Its purpose is to define APIs and provide information, for things like, is a TPM 
+Its purpose is to define APIs and provide information, for things like, is a TPM
 present, which PCR banks are active,  obtain the TCG boot log, extend hashes to PCRs,
-append events to the TCG boot log etc. </p>
+append events to the TCG boot log etc.</p>
 <p>So you can effectively encrypt your root filesystem and store the decryption
 key safely in your TPM.  That key will only be released if the TPM PCRs
 contain the exact same values that they had when the key was sealed.</p>
@@ -161,7 +159,7 @@ contain the exact same values that they had when the key was sealed.</p>
 <li><strong>PCR23:</strong> Application Support</li>
 </ul>
 <h2><strong>Why the DeveloperBox</strong></h2>
-<p>A while ago I explained how storing EFI Variables into an RPMB partition of an 
+<p>A while ago I explained how storing EFI Variables into an RPMB partition of an
 <a href="https://apalos.github.io/Protected%20UEFI%20variables%20with%20U-Boot.html#Protected%20UEFI%20variables%20with%20U-Boot">eMMC</a> works.
 There's basically three requirements.</p>
 <ul>
@@ -172,7 +170,7 @@ There's basically three requirements.</p>
 <p>With an eMMC available we can also use Microsoft's firmware TPM (or <a href="https://github.com/microsoft/ms-tpm-20-ref/">fTPM</a>)
 and enable measured boot.</p>
 <p>This is the only <a href="https://www.96boards.org/product/developerbox/">hardware</a>
-I had available which abides to those requirements. 
+I had available which abides to those requirements.
 However what you'll read here applies to any board that has identical features.</p>
 <h2><strong>Compiling (a lot)</strong></h2>
 <p>There's <strong>a lot</strong> of firmware components that need to be compiled for this to work.
@@ -190,9 +188,9 @@ Just for reference you will need</p>
 image as well as some not (yet) upstreamed patches.
 Fortunately there's an OpenEmbedded layer from Linaro that can do this for us
 on the DeveloperBox.</p>
-<div class="highlight"><pre><span></span><code>git clone https://git.codelinaro.org/linaro/dependable-boot/meta-ts.git
-<span class="nb">cd</span> meta-ts
-kas build ci/synquacer.yml
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://git.codelinaro.org/linaro/dependable-boot/meta-ts.git
+<span class="nb">cd</span><span class="w"> </span>meta-ts
+kas<span class="w"> </span>build<span class="w"> </span>ci/synquacer.yml
 </code></pre></div>
 
 <h2><strong>Updating the firmware</strong></h2>
@@ -200,30 +198,30 @@ kas build ci/synquacer.yml
 The tl;dr version is flip DSW2-7 to enable the serial flasher, open your minicom and use xmodem to
 send and update the files.</p>
 <p>All the files you need will be located at <code>build/tmp/deploy/images/synquacer/</code></p>
-<div class="highlight"><pre><span></span><code>flash write cm3 -&gt;  Control-A S -&gt; send scp_romramfw_release.bin
-flash write arm-tf -&gt; Control-A S -&gt; send fip_all_arm_tf_optee.bin
-flash rawwrite 0x500000 0x100000  -&gt; Control-A S -&gt; send optee/tee-pager_v2.bin
-flash rawwrite 0x200000 0x100000 -&gt; Control-A S -&gt; send u-boot.bin
+<div class="highlight"><pre><span></span><code>flash<span class="w"> </span>write<span class="w"> </span>cm3<span class="w"> </span>-&gt;<span class="w">  </span>Control-A<span class="w"> </span>S<span class="w"> </span>-&gt;<span class="w"> </span>send<span class="w"> </span>scp_romramfw_release.bin
+flash<span class="w"> </span>write<span class="w"> </span>arm-tf<span class="w"> </span>-&gt;<span class="w"> </span>Control-A<span class="w"> </span>S<span class="w"> </span>-&gt;<span class="w"> </span>send<span class="w"> </span>fip_all_arm_tf_optee.bin
+flash<span class="w"> </span>rawwrite<span class="w"> </span>0x500000<span class="w"> </span>0x100000<span class="w">  </span>-&gt;<span class="w"> </span>Control-A<span class="w"> </span>S<span class="w"> </span>-&gt;<span class="w"> </span>send<span class="w"> </span>optee/tee-pager_v2.bin
+flash<span class="w"> </span>rawwrite<span class="w"> </span>0x200000<span class="w"> </span>0x100000<span class="w"> </span>-&gt;<span class="w"> </span>Control-A<span class="w"> </span>S<span class="w"> </span>-&gt;<span class="w"> </span>send<span class="w"> </span>u-boot.bin
 </code></pre></div>
 
 <h2><strong>Install a distro</strong></h2>
 <p>I am using
-<a href="https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/aarch64/iso/Fedora-Server-netinst-aarch64-35-1.2.iso">Fedora</a> 
-on the example here,  but since the U-Boot versions since 2021.04 are 
+<a href="https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/aarch64/iso/Fedora-Server-netinst-aarch64-35-1.2.iso">Fedora</a>
+on the example here,  but since the U-Boot versions since 2021.04 are
 SystemReady-IR compliant any COTS distro should work.</p>
-<div class="highlight"><pre><span></span><code>sudo dd <span class="k">if</span><span class="o">=</span>Fedora-Server-netinst-aarch64-35-1.2.iso <span class="nv">of</span><span class="o">=</span>/dev/sdX <span class="nv">bs</span><span class="o">=</span>128M <span class="nv">status</span><span class="o">=</span>progress
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>Fedora-Server-netinst-aarch64-35-1.2.iso<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/sdX<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>128M<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
 </code></pre></div>
 
 <p>Plug your usb stick in a port and start up the board.
 In U-Boot's console do</p>
-<div class="highlight"><pre><span></span><code>usb reset
-load usb <span class="m">0</span> <span class="nv">$kernel_addr_r</span> efi/boot/BOOTAA64.EFI <span class="o">&amp;&amp;</span> bootefi <span class="nv">$kernel_addr_r</span>
+<div class="highlight"><pre><span></span><code>usb<span class="w"> </span>reset
+load<span class="w"> </span>usb<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="nv">$kernel_addr_r</span><span class="w"> </span>efi/boot/BOOTAA64.EFI<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>bootefi<span class="w"> </span><span class="nv">$kernel_addr_r</span>
 </code></pre></div>
 
 <p>Since I am using the box in headless mode,  installing via VNC is a nice option to avoid
 the console nuisance.</p>
 <p><img src="site_images/vnc.png" alt="VNC"></p>
-<p><strong>Make sure you encrypt the filesystem using a password as we'll be 
+<p><strong>Make sure you encrypt the filesystem using a password as we'll be
 needing this later on</strong></p>
 <p><img src="site_images/encrypt.png" alt="Encrypt FS"></p>
 <p>It's worth noting that since U-Boot does not support SetVariable at runtime you'll get an error
@@ -232,31 +230,31 @@ can just continue the installation and fix up the boot options later.</p>
 <p><img src="site_images/error.png" alt="SetVariable Error"></p>
 <p>Once the installation completes, you will have 3 partitions: EFI, boot, and the luks encrypted root.</p>
 <p>Reboot your board and stop U-Boot at it's console.</p>
-<div class="highlight"><pre><span></span><code>nvme scan
-efidebug boot add -b <span class="m">0</span> Fedora nvme <span class="m">0</span> EFI/fedora/shimaa64.efi
-efidebug boot order <span class="m">0</span>
-bootefi bootmgr
+<div class="highlight"><pre><span></span><code>nvme<span class="w"> </span>scan
+efidebug<span class="w"> </span>boot<span class="w"> </span>add<span class="w"> </span>-b<span class="w"> </span><span class="m">0</span><span class="w"> </span>Fedora<span class="w"> </span>nvme<span class="w"> </span><span class="m">0</span><span class="w"> </span>EFI/fedora/shimaa64.efi
+efidebug<span class="w"> </span>boot<span class="w"> </span>order<span class="w"> </span><span class="m">0</span>
+bootefi<span class="w"> </span>bootmgr
 </code></pre></div>
 
 <p>That should set SHIM as your first boot choice.</p>
 <h2><strong>Enabling fTPM</strong></h2>
 <p>The kernel modules needed for Microsoft's <a href="https://github.com/microsoft/ms-tpm-20-ref/">fTPM</a>
-are included in the Fedora35 kernel.  However,  since it relies on OP-TEE to 
+are included in the Fedora35 kernel.  However,  since it relies on OP-TEE to
 provide the RPMB access,  you need to start the TEE supplicant before the module gets inserted.</p>
 <h3>Compiling optee_client</h3>
 <p>On the target system, get a copy of optee_client compile it and install it.  The default installation will end up on
 <code>/usr/local/sbin</code></p>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/OP-TEE/optee_client.git
-<span class="nb">cd</span> optee_client <span class="o">&amp;&amp;</span> mkdir build <span class="o">&amp;&amp;</span> <span class="nb">cd</span> build
-cmake ../ -DRPMB_EMU<span class="o">=</span><span class="m">0</span>
-make -j<span class="k">$(</span>nproc<span class="k">)</span>
-sudo make install
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/OP-TEE/optee_client.git
+<span class="nb">cd</span><span class="w"> </span>optee_client<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mkdir<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>build
+cmake<span class="w"> </span>../<span class="w"> </span>-DRPMB_EMU<span class="o">=</span><span class="m">0</span>
+make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+sudo<span class="w"> </span>make<span class="w"> </span>install
 </code></pre></div>
 
 <h3>Enabling fTPM on systemd</h3>
 <p>Create <code>/etc/systemd/system/tee-supplicant.service</code>  with the following contents</p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span>Unit<span class="o">]</span>
-<span class="nv">Description</span><span class="o">=</span>tee supplicant
+<span class="nv">Description</span><span class="o">=</span>tee<span class="w"> </span>supplicant
 
 <span class="o">[</span>Service<span class="o">]</span>
 <span class="nv">User</span><span class="o">=</span>root
@@ -268,12 +266,12 @@ sudo make install
 </code></pre></div>
 
 <p>and enable the service</p>
-<div class="highlight"><pre><span></span><code>sudo systemctl <span class="nb">enable</span> tee-supplicant
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>tee-supplicant
 </code></pre></div>
 
 <p>If you reboot your system now your firmwareTPM should be operational.
-You can check the logs with </p>
-<div class="highlight"><pre><span></span><code>sudo tpm2_eventlog /sys/kernel/security/tpm0/binary_bios_measurements
+You can check the logs with</p>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>tpm2_eventlog<span class="w"> </span>/sys/kernel/security/tpm0/binary_bios_measurements
 </code></pre></div>
 
 <h3>Sealing the key</h3>
@@ -281,50 +279,50 @@ You can check the logs with </p>
 you can automate the decryption of your root filesystem.</p>
 <p>Fedora has clevis,  an automated encryption framework,  which can make your life easier
 as far as key sealing and unsealing is concerned.</p>
-<div class="highlight"><pre><span></span><code>sudo dnf install clevis clevis-luks clevis-dracut clevis-udisks2 clevis-systemd
-sudo clevis luks <span class="nb">bind</span> -d /dev/nvme0n1p3 tpm2 <span class="s1">&#39;{&quot;pcr_ids&quot;:&quot;0,1,2,3,4,5,6,7&quot;}&#39;</span>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>clevis<span class="w"> </span>clevis-luks<span class="w"> </span>clevis-dracut<span class="w"> </span>clevis-udisks2<span class="w"> </span>clevis-systemd
+sudo<span class="w"> </span>clevis<span class="w"> </span>luks<span class="w"> </span><span class="nb">bind</span><span class="w"> </span>-d<span class="w"> </span>/dev/nvme0n1p3<span class="w"> </span>tpm2<span class="w"> </span><span class="s1">&#39;{&quot;pcr_ids&quot;:&quot;0,1,2,3,4,5,6,7&quot;}&#39;</span>
 </code></pre></div>
 
 <h3>Adding tee-supplicant to your initramfs</h3>
 <p>As we mentioned the fTPM relies on the op-tee supplicant for the RPMB accesses.  So the missing
 piece of the puzzle in order to access your TPM, unseal your key and decrypt the
 filesystem,  is create an initramfs with the needed modules and the tee-supplicant.</p>
-<p>Create <code>/usr/lib/dracut/modules.d/60tee-supplicant/</code> directory, copy the 
-<code>/etc/systemd/system/tee-supplicant.service</code> we created earlier and<br>
+<p>Create <code>/usr/lib/dracut/modules.d/60tee-supplicant/</code> directory, copy the
+<code>/etc/systemd/system/tee-supplicant.service</code> we created earlier and
 add a <code>module-setup.sh</code> file with the following contents.</p>
 <div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/bash</span>
-check<span class="o">()</span> <span class="o">{</span>
-    require_binaries /usr/local/sbin/tee-supplicant <span class="o">||</span> <span class="k">return</span> <span class="m">1</span>
-    <span class="k">return</span> <span class="m">0</span>
+check<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>require_binaries<span class="w"> </span>/usr/local/sbin/tee-supplicant<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="m">1</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="m">0</span>
 <span class="o">}</span>
 
-depends<span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="m">0</span>
+depends<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="m">0</span>
 <span class="o">}</span>
 
-install<span class="o">()</span> <span class="o">{</span>
-    inst /usr/local/sbin/tee-supplicant /sbin/tee-supplicant
-    inst <span class="s2">&quot;</span><span class="nv">$moddir</span><span class="s2">/tee-supplicant.service&quot;</span> <span class="s2">&quot;</span><span class="nv">$systemdsystemunitdir</span><span class="s2">/tee-supplicant.service&quot;</span>
-    <span class="nv">$SYSTEMCTL</span> -q --root <span class="s2">&quot;</span><span class="nv">$initdir</span><span class="s2">&quot;</span> add-wants cryptsetup.target tee-supplicant.service
+install<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>inst<span class="w"> </span>/usr/local/sbin/tee-supplicant<span class="w"> </span>/sbin/tee-supplicant
+<span class="w">    </span>inst<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$moddir</span><span class="s2">/tee-supplicant.service&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$systemdsystemunitdir</span><span class="s2">/tee-supplicant.service&quot;</span>
+<span class="w">    </span><span class="nv">$SYSTEMCTL</span><span class="w"> </span>-q<span class="w"> </span>--root<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$initdir</span><span class="s2">&quot;</span><span class="w"> </span>add-wants<span class="w"> </span>cryptsetup.target<span class="w"> </span>tee-supplicant.service
 <span class="o">}</span>
 
-installkernel<span class="o">()</span> <span class="o">{</span>
-    <span class="nv">hostonly</span><span class="o">=</span><span class="s1">&#39;&#39;</span> <span class="nv">instmods</span> <span class="o">=</span>drivers/char/tpm
-    instmods tee optee
+installkernel<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="nv">hostonly</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="w"> </span><span class="nv">instmods</span><span class="w"> </span><span class="o">=</span>drivers/char/tpm
+<span class="w">    </span>instmods<span class="w"> </span>tee<span class="w"> </span>optee
 <span class="o">}</span>
 </code></pre></div>
 
 <p>You can now re-create your initramfs with</p>
-<div class="highlight"><pre><span></span><code>sudo dracut --add clevis-pin-tpm2 --add tee-supplicant --force
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>dracut<span class="w"> </span>--add<span class="w"> </span>clevis-pin-tpm2<span class="w"> </span>--add<span class="w"> </span>tee-supplicant<span class="w"> </span>--force
 </code></pre></div>
 
 <p>If everything is setup correctly you should see something along the lines of this on your screen</p>
-<div class="highlight"><pre><span></span><code>Welcome to Fedora Linux <span class="m">35</span> <span class="o">(</span>Server Edition<span class="o">)</span> dracut-055-6.fc35 <span class="o">(</span>Initramfs<span class="o">)</span>!
+<div class="highlight"><pre><span></span><code>Welcome<span class="w"> </span>to<span class="w"> </span>Fedora<span class="w"> </span>Linux<span class="w"> </span><span class="m">35</span><span class="w"> </span><span class="o">(</span>Server<span class="w"> </span>Edition<span class="o">)</span><span class="w"> </span>dracut-055-6.fc35<span class="w"> </span><span class="o">(</span>Initramfs<span class="o">)</span>!
 &lt;snip&gt;
-<span class="o">[</span>  OK  <span class="o">]</span> Reached target Basic System.
-         Starting Cryptography Setu…8ff0-43f6-9484-b4f16ff43093...
-<span class="o">[</span>  OK  <span class="o">]</span> Started tee supplicant.
-Please enter passphrase <span class="k">for</span> disk Samsung SSD <span class="m">960</span> EVO 250GB <span class="o">(</span>luks-5fe9fed9-8ff0-43f6-9484-b4f16ff43093<span class="o">)</span>:
+<span class="o">[</span><span class="w">  </span>OK<span class="w">  </span><span class="o">]</span><span class="w"> </span>Reached<span class="w"> </span>target<span class="w"> </span>Basic<span class="w"> </span>System.
+<span class="w">         </span>Starting<span class="w"> </span>Cryptography<span class="w"> </span>Setu…8ff0-43f6-9484-b4f16ff43093...
+<span class="o">[</span><span class="w">  </span>OK<span class="w">  </span><span class="o">]</span><span class="w"> </span>Started<span class="w"> </span>tee<span class="w"> </span>supplicant.
+Please<span class="w"> </span>enter<span class="w"> </span>passphrase<span class="w"> </span><span class="k">for</span><span class="w"> </span>disk<span class="w"> </span>Samsung<span class="w"> </span>SSD<span class="w"> </span><span class="m">960</span><span class="w"> </span>EVO<span class="w"> </span>250GB<span class="w"> </span><span class="o">(</span>luks-5fe9fed9-8ff0-43f6-9484-b4f16ff43093<span class="o">)</span>:
 </code></pre></div>
 
 <p>but this time you won't have to supply a password!</p>

@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="./theme/stylesheet/style.min.css">
+
+
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+          href="./theme/pygments/github.min.css">
+
+
+  <link rel="stylesheet" type="text/css" href="./theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="./theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="./theme/font-awesome/css/solid.css">
+
+
+
+
+
+  
+
+
+<meta name="author" content="Ilias Apalodimas" />
+<meta name="description" content="U-Boot, in most of the supported architectures, relocates itself on top of DRAM but leaves the memory as RWX Arm64 is a notable exception" />
+<meta name="keywords" content="Bootloaders, Security, U-Boot, UEFI">
+
+
+<meta property="og:site_name" content="Volatile rumblings"/>
+<meta property="og:title" content="U-Boot memory mappings"/>
+<meta property="og:description" content="U-Boot, in most of the supported architectures, relocates itself on top of DRAM but leaves the memory as RWX Arm64 is a notable exception"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:url" content="./U-Boot memory mappings.html"/>
+<meta property="og:type" content="article"/>
+<meta property="article:published_time" content="2025-03-13 10:20:00+02:00"/>
+<meta property="article:modified_time" content=""/>
+<meta property="article:author" content="./author/ilias-apalodimas.html">
+<meta property="article:section" content="UEFI"/>
+<meta property="article:tag" content="Bootloaders"/>
+<meta property="article:tag" content="Security"/>
+<meta property="article:tag" content="U-Boot"/>
+<meta property="article:tag" content="UEFI"/>
+<meta property="og:image" content="site_images/profile.png">
+
+  <title>Volatile rumblings &ndash; U-Boot memory mappings</title>
+
+</head>
+<body class="light-theme">
+  <aside>
+    <div>
+      <a href=".">
+        <img src="site_images/profile.png" alt="" title="">
+      </a>
+
+      <h1>
+        <a href="."></a>
+      </h1>
+
+<p>Volatile rumblings</p>
+
+      <nav>
+        <ul class="list">
+
+
+
+            <li>
+              <a target="_self" href="http://github.com/Xdp-project" >XDP</a>
+            </li>
+        </ul>
+      </nav>
+
+      <ul class="social">
+          <li>
+            <a  class="sc-github" href="https://github.com/apalos" target="_blank">
+              <i class="fab fa-github"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-linkedin" href="https://www.linkedin.com/in/ilias-apalodimas-91891a34/" target="_blank">
+              <i class="fab fa-linkedin"></i>
+            </a>
+          </li>
+          <li>
+            <a  class="sc-twitter" href="https://www.twitter.com/_apalos" target="_blank">
+              <i class="fab fa-twitter"></i>
+            </a>
+          </li>
+      </ul>
+    </div>
+
+  </aside>
+  <main>
+
+    <nav>
+      <a href=".">Home</a>
+
+      <a href="/archives.html">Archives</a>
+      <a href="/categories.html">Categories</a>
+      <a href="/tags.html">Tags</a>
+
+
+    </nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="U-Boot memory mappings">U-Boot memory mappings</h1>
+    <p>
+      Posted on Thu 13 March 2025 in <a href="./category/uefi.html">UEFI</a>
+
+        &#8226; 3 min read
+    </p>
+  </header>
+
+
+  <div>
+    <h6></h6>
+<p><link rel="stylesheet" href="overload.css"></p>
+<h2><strong>Why not RWX</strong></h2>
+<p>Explaining why is a complex topic and not within the scope of this blog, but generally speaking
+mapping executables with specific permissions (RO, RX, and RW^X) instead of just RWX is crucial for security.
+It greatly reduces the attack surface and makes vulnerabilities harder to exploit. The Arm
+architecture allows us to configure the MMU with the following</p>
+<ul>
+<li>PXN: Privileged eXecute Never -- Prevents execution from privileged mode, usually EL1/2 for
+  bootloaders</li>
+<li>UXN: Unprivileged eXecute Never -- Prevents execution from unprivileged mode, usually EL0 for
+  bootloaders</li>
+<li>RO: Read-only -- Prevents memory writes.</li>
+</ul>
+<h2><strong>Current status</strong></h2>
+<p>In U-Boot, memory is either normal memory -- which is mapped as RWX, or device memory
+which is mapped as RW. When U-Boot relocates it self to the top of DRAM, it doesn't change
+any of the memory permissions.</p>
+<p>The output below is only available in the -next branch which includes
+this <a href="https://lore.kernel.org/u-boot/20250301164922.397441-1-ilias.apalodimas@linaro.org/">patchset</a>
+by enabling <code>CMD_MEMINFO</code> &amp;&amp; <code>CMD_CMD_MEMINFO_MAP</code> in the qemu_arm64_lwip_defconfig.</p>
+<p>Booting up QEMU gives us this</p>
+<div class="highlight"><pre><span></span><code>qemu-system-aarch64<span class="w"> </span>-m<span class="w"> </span><span class="m">8192</span><span class="w"> </span>-smp<span class="w"> </span><span class="m">2</span><span class="w"> </span>-nographic<span class="w"> </span>-cpu<span class="w"> </span>cortex-a57<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-bios<span class="w"> </span>u-boot.bin<span class="w"> </span>-machine<span class="w"> </span>virt,secure<span class="o">=</span>off<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-device<span class="w"> </span>virtio-rng-pci
+
+U-Boot<span class="w"> </span><span class="m">2025</span>.04-rc4-00404-g0e1fc465fea6<span class="w"> </span><span class="o">(</span>Mar<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">2025</span><span class="w"> </span>-<span class="w"> </span><span class="m">23</span>:18:56<span class="w"> </span>+0200<span class="o">)</span>
+
+DRAM:<span class="w">  </span><span class="m">8</span><span class="w"> </span>GiB
+Core:<span class="w">  </span><span class="m">52</span><span class="w"> </span>devices,<span class="w"> </span><span class="m">15</span><span class="w"> </span>uclasses,<span class="w"> </span>devicetree:<span class="w"> </span>board
+<span class="o">[</span>...<span class="o">]</span>
+
+<span class="o">=</span>&gt;<span class="w"> </span>meminfo
+DRAM:<span class="w">  </span><span class="m">8</span><span class="w"> </span>GiB
+Walking<span class="w"> </span>pagetable<span class="w"> </span>at<span class="w"> </span>000000023ffe0000,<span class="w"> </span>va_bits:<span class="w"> </span><span class="m">40</span>.<span class="w"> </span>Using<span class="w"> </span><span class="m">4</span><span class="w"> </span>levels
+<span class="o">[</span>0x0000023ffe1000<span class="o">]</span><span class="w">                          </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">  </span><span class="o">[</span>0x0000023ffe2000<span class="o">]</span><span class="w">                        </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">    </span><span class="o">[</span>0x00000000000000<span class="w"> </span>-<span class="w"> </span>0x00000008000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">    </span><span class="o">[</span>0x00000008000000<span class="w"> </span>-<span class="w"> </span>0x00000040000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Device-nGnRnE<span class="w"> </span><span class="p">|</span><span class="w"> </span>Non-shareable
+<span class="w">  </span><span class="o">[</span>0x00000040000000<span class="w"> </span>-<span class="w"> </span>0x00004000000000<span class="o">]</span><span class="w">     </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">  </span><span class="o">[</span>0x0000023ffe3000<span class="o">]</span><span class="w">                        </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">    </span><span class="o">[</span>0x00004010000000<span class="w"> </span>-<span class="w"> </span>0x00004020000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Device-nGnRnE<span class="w"> </span><span class="p">|</span><span class="w"> </span>Non-shareable
+<span class="o">[</span>0x0000023ffe4000<span class="o">]</span><span class="w">                          </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">  </span><span class="o">[</span>0x00008000000000<span class="w"> </span>-<span class="w"> </span>0x00010000000000<span class="o">]</span><span class="w">     </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Device-nGnRnE<span class="w"> </span><span class="p">|</span><span class="w"> </span>Non-shareable
+</code></pre></div>
+
+<ul>
+<li><strong>PXN UXN</strong>: Read-Write memory</li>
+<li><strong>RWX</strong>: Read-Write-Execute memory</li>
+</ul>
+<p>As you can see, only device mapped memory is not allowed to execute.</p>
+<h2><strong>Enable memory permissions</strong></h2>
+<p>The patchset above adds another interesting flag <code>CONFIG_MMU_PGPROT</code> which only applies to arm64.
+Unfortunately we can't yet enable it by default for all arm64 boards, because bugs like <a href="https://lore.kernel.org/u-boot/20250129-rockchip-pinctrl-const-v1-0-450ccdadfa7e@cherry.de/">this</a>
+and <a href="https://lore.kernel.org/u-boot/20250130133646.2177194-1-andre.przywara@arm.com/">this</a> will now lead to a crash.</p>
+<p>With the above fixes we can enable the flag in QEMU and look into the new mappings</p>
+<div class="highlight"><pre><span></span><code><span class="o">=</span>&gt;<span class="w"> </span>meminfo
+DRAM:<span class="w">  </span><span class="m">8</span><span class="w"> </span>GiB
+Walking<span class="w"> </span>pagetable<span class="w"> </span>at<span class="w"> </span>000000023ffe0000,<span class="w"> </span>va_bits:<span class="w"> </span><span class="m">40</span>.<span class="w"> </span>Using<span class="w"> </span><span class="m">4</span><span class="w"> </span>levels
+<span class="o">[</span>0x0000023ffe1000<span class="o">]</span><span class="w">                          </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">  </span><span class="o">[</span>0x0000023ffe2000<span class="o">]</span><span class="w">                        </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">    </span><span class="o">[</span>0x00000000000000<span class="w"> </span>-<span class="w"> </span>0x00000008000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">    </span><span class="o">[</span>0x00000008000000<span class="w"> </span>-<span class="w"> </span>0x00000040000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Device-nGnRnE<span class="w"> </span><span class="p">|</span><span class="w"> </span>Non-shareable
+<span class="w">  </span><span class="o">[</span>0x00000040000000<span class="w"> </span>-<span class="w"> </span>0x00000200000000<span class="o">]</span><span class="w">     </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">  </span><span class="o">[</span>0x0000023ffea000<span class="o">]</span><span class="w">                        </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">    </span><span class="o">[</span>0x00000200000000<span class="w"> </span>-<span class="w"> </span>0x0000023f600000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">    </span><span class="o">[</span>0x0000023ffeb000<span class="o">]</span><span class="w">                      </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">      </span><span class="o">[</span>0x0000023f600000<span class="w"> </span>-<span class="w"> </span>0x0000023f6b9000<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>Pages<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">      </span><span class="o">[</span>0x0000023f6b9000<span class="w"> </span>-<span class="w"> </span>0x0000023f77d000<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>Pages<span class="w"> </span><span class="p">|</span><span class="w"> </span>RO<span class="w">         </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">      </span><span class="o">[</span>0x0000023f77d000<span class="w"> </span>-<span class="w"> </span>0x0000023f77e000<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>Pages<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">      </span><span class="o">[</span>0x0000023f77e000<span class="w"> </span>-<span class="w"> </span>0x0000023f7c8000<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>Pages<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w"> </span>RO<span class="w"> </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">      </span><span class="o">[</span>0x0000023f7c8000<span class="w"> </span>-<span class="w"> </span>0x0000023f7e0000<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>Pages<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">      </span><span class="o">[</span>0x0000023f7e0000<span class="w"> </span>-<span class="w"> </span>0x0000023f800000<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w">  </span>Pages<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">    </span><span class="o">[</span>0x0000023f800000<span class="w"> </span>-<span class="w"> </span>0x00000240000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">  </span><span class="o">[</span>0x00000240000000<span class="w"> </span>-<span class="w"> </span>0x00004000000000<span class="o">]</span><span class="w">     </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>RWX<span class="w">        </span><span class="p">|</span><span class="w"> </span>Normal<span class="w">        </span><span class="p">|</span><span class="w"> </span>Inner-shareable
+<span class="w">  </span><span class="o">[</span>0x0000023ffe3000<span class="o">]</span><span class="w">                        </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">    </span><span class="o">[</span>0x00004010000000<span class="w"> </span>-<span class="w"> </span>0x00004020000000<span class="o">]</span><span class="w">   </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Device-nGnRnE<span class="w"> </span><span class="p">|</span><span class="w"> </span>Non-shareable
+<span class="o">[</span>0x0000023ffe4000<span class="o">]</span><span class="w">                          </span><span class="p">|</span><span class="w">  </span>Table<span class="w"> </span><span class="p">|</span><span class="w">            </span><span class="p">|</span><span class="w">               </span><span class="p">|</span>
+<span class="w">  </span><span class="o">[</span>0x00008000000000<span class="w"> </span>-<span class="w"> </span>0x00010000000000<span class="o">]</span><span class="w">     </span><span class="p">|</span><span class="w">  </span>Block<span class="w"> </span><span class="p">|</span><span class="w"> </span>PXN<span class="w"> </span>UXN<span class="w">    </span><span class="p">|</span><span class="w"> </span>Device-nGnRnE<span class="w"> </span><span class="p">|</span><span class="w"> </span>Non-shareable
+</code></pre></div>
+
+<ul>
+<li><strong>PXN UXN RO</strong>: Read-only memory</li>
+<li><strong>PXN UXN</strong>: Read-Write memory</li>
+<li><strong>RO</strong>: Read-Execute memory</li>
+</ul>
+<p>The memory U-Boot was mapped <code>[0x0000023f77e000 - 0x0000023f7c8000]</code>, <code>[0x0000023f7c8000 - 0x0000023f7e0000]</code> and
+<code>[0x0000023f6b9000 - 0x0000023f77d000]</code> has now changed!</p>
+<h2><strong>But we still have RWX memory</strong></h2>
+<p>There are several reasons that the rest of the memory is left as RWX. One of them is EFI runtime
+services.</p>
+<h2><strong>Future work</strong></h2>
+<ul>
+<li>Rework the linker scripts and decouple EFI memory from .text</li>
+<li>Apply proper mapping to EFI runtime services as well</li>
+</ul>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="./tag/bootloaders.html">Bootloaders</a>
+      <a href="./tag/security.html">Security</a>
+      <a href="./tag/u-boot.html">U-Boot</a>
+      <a href="./tag/uefi.html">UEFI</a>
+    </p>
+  </div>
+
+
+
+
+
+</article>
+
+    <footer>
+<p>&copy;  </p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+</p>    </footer>
+  </main>
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " Volatile rumblings ",
+  "url" : ".",
+  "image": "site_images/profile.png",
+  "description": ""
+}
+</script>
+
+</body>
+</html>
